@@ -253,7 +253,7 @@ def calculateLight():
                     lights[WORLD_WIDTH-x-1][y] = current_light
                 if lights[WORLD_WIDTH-x-1][y] == current_light and ids[world[WORLD_WIDTH-x-1][y].id].state == 1:
                     current_light -= 25
-    print time.time() - ct
+    print "Lighting update took " + str(time.time() - ct) + " seconds"
     return lights
                 
 def drawBlocks(camera):
@@ -503,13 +503,13 @@ if __name__ == "__main__":
             if event.type == QUIT:
                 sys.exit()
             if event.type == MOUSEBUTTONDOWN:
-                #scroll down
+                #scroll up
                 if event.button == 4:
                     if selected == 0:
                         selected = 8
                     else:
                         selected -= 1
-                #scroll up
+                #scroll down
                 elif event.button == 5:
                     if selected == 8:
                         selected = 0
