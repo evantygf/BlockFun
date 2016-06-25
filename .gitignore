@@ -1,0 +1,4 @@
+/dist
+/*.pydevproject
+/*.project
+/build
