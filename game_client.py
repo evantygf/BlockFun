@@ -19,6 +19,7 @@ import cPickle as pickle
 from pygame.locals import *
 from PodSixNet.Connection import connection, ConnectionListener
 
+#Networking class
 class Client(ConnectionListener):
     def __init__(self, host, port):
         self.Connect((host, port))
@@ -62,14 +63,16 @@ class Client(ConnectionListener):
         traceback.print_exc()
         connection.Close()
 
+#Id is a metaclass for tiles and will be a metaclass for items in the future (such as weapons or tools)
 class Id:
     def __init__(self, image_path, name, id):
         self.image = pygame.image.load(image_path).convert()
         self.rect = self.image.get_rect()
         self.name = name
         self.id = id
-        ids[id] = self
+        ids[id] = self #adds itself to the list of ids
 
+#A tile is an id that can be placed and broken
 class Tile(Id):
     def __init__(self, image_path, name, id, state, breakable, drops):
         Id.__init__(self, image_path, name, id)
@@ -111,6 +114,8 @@ class Tile(Id):
 #                     self.inv[i] = {"id": id, "quantity": amount}
 #                     break
 
+
+#Data is an id that has metadata (such as what items are in a chest)
 class Data:
     def __init__(self, id, metadata=None):
         self.id = id
@@ -125,10 +130,13 @@ class Character:
         self.name = name
         self.jumping = False
         self.yVel = 0
-        self.progress = 0
+        self.progress = 0 #To be used when blocks take time to break
+
+
 
 def getTile(id):
     return ids[id]
+
 def getInvSlot(id, data=None):
     if data == None:
         indexer = dict((p['id'], i) for i, p in enumerate(inv) if inv[i] is not None)
@@ -136,6 +144,7 @@ def getInvSlot(id, data=None):
     else:
         indexer = dict((p['id'], i) for i, p in enumerate(data) if data[i] is not None)
         return indexer.get(id)
+
 def getItemAmount(id, data=None):
     if data == None:
         index = getInvSlot(id)
@@ -160,6 +169,7 @@ def getSlotAmount(slot, data=None):
             return data[slot]["quantity"]
         else:
             return 0
+
 def addToInv(id, amount, data=None):
     if data == None:
         indexer = dict((p['id'], i) for i, p in enumerate(inv) if inv[i] is not None)
@@ -260,8 +270,7 @@ def drawBlocks(camera):
             y += 16
         x += 16
 
-        
-        
+ 
 def drawInventory():
     screen.blit(inventoryBar, ((WINDOW_WIDTH - 328) / 2, WINDOW_HEIGHT - 40))
     back = pygame.Surface((32,32)).convert()
@@ -358,9 +367,10 @@ def gravity(char):
 
 
 def resetPosition():
+    character.rect.topleft = ((WORLD_WIDTH_PX-16)/2, 0) #initial position is in the sky in the middle of the map
     character.rect.x = character.rect.x/16*16
     while not (getTile(c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id).state == 1 or getTile(c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id).state == 1):
-        character.rect.y += 1
+        character.rect.y += 1 #lower player until they hit ground
 
 #constants
 WINDOW_WIDTH = 640
@@ -403,8 +413,7 @@ if __name__ == "__main__":
     
     clock = pygame.time.Clock()
     
-    character = Character("images/character.png", "Evan")
-    character.rect.topleft = ((WORLD_WIDTH_PX-16)/2, 0)
+    character = Character("images/character.png", "User")
     
     # real_tiles = [ids[i] for i in range(len(ids)) if ids[i] is not None]
     # breakables = [real_tiles[i] for i in range(len(real_tiles)) if real_tiles[i].breakable]
