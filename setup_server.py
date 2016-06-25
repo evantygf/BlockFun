@@ -9,5 +9,4 @@ if __name__ == '__main__':
         console = [{'script': "server.py"}],
         zipfile = None,
     )
-    raw_input("Press any key to continue"
-
+    raw_input("Press any key to continue")
