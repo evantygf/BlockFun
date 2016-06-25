@@ -1,5 +1,7 @@
 Block Fun
 
+Requires Python 2.7 and Pygame 1.9 to run and py2exe to build.
+
 Controls:
 "A" to move left
 "D" to move right
