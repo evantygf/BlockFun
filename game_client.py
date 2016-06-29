@@ -592,4 +592,4 @@ if __name__ == "__main__":
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
         drawInventory()
         pygame.display.update()
-        frame += 1
+#         frame += 1
