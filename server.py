@@ -13,7 +13,37 @@ class Data:
         self.metadata = metadata
         if self.id == 9 and self.metadata == None:
             self.metadata = [None for i in range(5)]
+            
+
+class Projectile:
+    def __init__(self, width, height, startpos, speed, traveldistance, angle, color):
+        self.width = width
+        self.height = height
+        self.color = color
+        self.startpos = startpos
+        self.rect.topleft = startpos
+        self.distance = 0
+        self.speed = speed
+        self.traveldistance = traveldistance
+        self.angle = angle
         
+    def rad_to_offset(self, radians, offset):
+        x = math.cos(radians) * offset
+        y = math.sin(radians) * offset
+        return [x, y]
+    
+    def add(self, u, v):
+        return [u[i]+v[i] for i in range(len(u))]
+        
+    def update(self):
+        if self.distance >= self.traveldistance:
+            self.kill()
+        
+        moveamount = self.rad_to_offset(self.angle, self.speed)
+        self.rect.topleft = self.add(self.rect.topleft, moveamount)
+        self.distance = math.sqrt(math.fabs(self.startpos[0] - self.rect.x) ** 2 + math.fabs(self.startpos[1] - self.rect.y) ** 2)
+
+
 def generateWorld():
     world = []
     for x in range(WORLD_WIDTH):

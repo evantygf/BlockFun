@@ -65,17 +65,18 @@ class Client(ConnectionListener):
 
 #Id is a metaclass for tiles and will be a metaclass for items in the future (such as weapons or tools)
 class Id:
-    def __init__(self, image_path, name, id):
+    def __init__(self, image_path, name, id, type):
         self.image = pygame.image.load(image_path).convert()
         self.rect = self.image.get_rect()
         self.name = name
+        self.type = type
         self.id = id
         ids[id] = self #adds itself to the list of ids
 
 #A tile is an id that can be placed and broken
 class Tile(Id):
-    def __init__(self, image_path, name, id, state, breakable, drops):
-        Id.__init__(self, image_path, name, id)
+    def __init__(self, image_path, name, id, type, state, breakable, drops):
+        Id.__init__(self, image_path, name, id, type)
         self.state = state
         self.breakable = breakable
         self.drops = drops
@@ -132,10 +133,12 @@ class Character:
         self.yVel = 0
         self.progress = 0 #To be used when blocks take time to break
 
-class Projectile(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-
+class Projectile:
+    def __init__(self, width, height, pos, color):
+        self.width = width
+        self.height = height
+        self.color = color
+        self.pos = pos
 
 
 def getTile(id):
@@ -398,19 +401,19 @@ if __name__ == "__main__":
     
     ids = [None for i in range(256)]
     
-    #image_path, name, id, state, breakable, drops
-    sky_tile = Tile("images/tiles/sky.png", "sky", 0, 0, 0, 0)
-    invisible_tile = Tile("images/tiles/invisible.png", "invisible", 1, 1, 0, 1)
-    bedrock_tile = Tile("images/tiles/bedrock.png", "bedrock", 2, 1, 0, 2)
-    grass_tile = Tile("images/tiles/grass.png", "grass", 3, 1, 1, 4)
-    dirt_tile = Tile("images/tiles/dirt.png", "dirt", 4, 1, 1, 4)
-    stone_tile = Tile("images/tiles/stone.png", "stone", 5, 1, 1, 5)
-    sand_tile = Tile("images/tiles/sand.png", "sand", 6, 1, 1, 6)
-    wood_tile = Tile("images/tiles/wood.png", "wood", 7, 0, 1, 7)
-    leaf_tile = Tile("images/tiles/leaf.png", "leaf", 8, 0, 1, 8)
-    chest_tile = Tile("images/tiles/chest.png", "chest", 9, 1, 1, 9)
-    diamond_tile = Tile("images/tiles/diamond ore.png", "diamond ore", 10, 1, 1, 10)
-    torch_tile = Tile("images/tiles/torch.png", "torch", 11, 0, 1, 11)
+    #                image_path,                             name,         id,         type, state, breakable, drops
+    sky_tile = Tile("images/tiles/sky.png",                 "sky",          0,      "block", 0,     0,          0)
+    invisible_tile = Tile("images/tiles/invisible.png",     "invisible",    1,      "block", 1,     0,          1)
+    bedrock_tile = Tile("images/tiles/bedrock.png",         "bedrock",      2,      "block", 1,     0,          2)
+    grass_tile = Tile("images/tiles/grass.png",             "grass",        3,      "block", 1,     1,          4)
+    dirt_tile = Tile("images/tiles/dirt.png",               "dirt",         4,      "block", 1,     1,          4)
+    stone_tile = Tile("images/tiles/stone.png",             "stone",        5,      "block", 1,     1,          5)
+    sand_tile = Tile("images/tiles/sand.png",               "sand",         6,      "block", 1,     1,          6)
+    wood_tile = Tile("images/tiles/wood.png",               "wood",         7,      "block", 0,     1,          7)
+    leaf_tile = Tile("images/tiles/leaf.png",               "leaf",         8,      "block", 0,     1,          8)
+    chest_tile = Tile("images/tiles/chest.png",             "chest",        9,      "block", 1,     1,          9)
+    diamond_tile = Tile("images/tiles/diamond ore.png",     "diamond ore",  10,     "block", 1,     1,          10)
+    torch_tile = Tile("images/tiles/torch.png",             "torch",        11,     "block", 0,     1,          11)
     
     inventoryBar =  pygame.image.load("images/bar.png").convert_alpha()
     chestBar = pygame.image.load("images/bar_small.png").convert_alpha()
