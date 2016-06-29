@@ -1,4 +1,4 @@
-import sys, random, ConfigParser
+import sys, random, ConfigParser, math
 import cPickle as pickle
 from time import sleep
 from weakref import WeakKeyDictionary
@@ -29,7 +29,7 @@ def generateWorld():
             elif y == WORLD_HEIGHT - 1:
                 world[x][y] = Data(2)
             elif y >= 0.7 * WORLD_HEIGHT:
-               world[x][y] = Data(5)
+                world[x][y] = Data(5)
             elif y >= 0.6 * WORLD_HEIGHT:
                 world[x][y] = Data(4)
             else:

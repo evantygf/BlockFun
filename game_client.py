@@ -132,6 +132,10 @@ class Character:
         self.yVel = 0
         self.progress = 0 #To be used when blocks take time to break
 
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+
 
 
 def getTile(id):
