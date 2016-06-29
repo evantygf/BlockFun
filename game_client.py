@@ -25,6 +25,7 @@ class Client(ConnectionListener):
         self.Connect((host, port))
         self.players = []
         self.world = None
+        self.projectiles = []
         self.lights = [[0 for i in xrange(WORLD_WIDTH)] for j in xrange(WORLD_HEIGHT)]
     
     def Loop(self):
@@ -50,7 +51,10 @@ class Client(ConnectionListener):
     
     def Network_players(self, data):
         self.players = data["players"]
-    
+        
+    def Network_projectiles(self, data):
+        self.projectiles = data["projectiles"]
+
     def Network_addToInv(self, data):
         addToInv(data["id"], data["amount"])
     
@@ -311,6 +315,11 @@ def drawChest(metadata,x,y):
             screen.blit(text_surf, (x+8-(chestBar.get_width()/2)-camera.x + 16*i + 2*(i+1) + (16 - inv_font.size(text)[0]), y-18-camera.y))
         else:
             screen.blit(back, (x+8-(chestBar.get_width()/2)-camera.x + 16*i + 2*(i+1), y-18-camera.y))
+            
+def drawProjectiles(projectiles):
+    for i in projectiles:
+        pygame.draw.rect(screen, i[3], (i[0][0] - camera.x, i[0][1] - camera.y, i[1], i[2]))
+
 
 def updateGrass(world, camera=None):
     if camera:
@@ -497,7 +506,10 @@ if __name__ == "__main__":
         if mouse_press[0]:
             if inv[selected]["id"] == 100:
                 #do gun stuff
-                pass
+                x_distance = mouse_pos[0] + camera.x - character.rect.x
+                y_distance = mouse_pos[1] + camera.y - character.rect.y
+                rotation_angle = math.atan2(y_distance, x_distance)
+                c.Send({"action": "addProjectile", "width": 5, "height": 5, "startpos": character.rect.center, "speed": 10, "traveldistance": 400, "angle": rotation_angle, "color": (0,0,0)})
             elif hovered.breakable:
                 #addToInv(hovered.drops, 1)
                 c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
@@ -573,6 +585,7 @@ if __name__ == "__main__":
                 screen.blit(character.image, (c.players[i][0]-camera.x,c.players[i][1]-camera.y))
                 drawName(c.players[i][3],c.players[i][0],c.players[i][1])
         screen.blit(character.image, (character.rect.x - camera.x, character.rect.y - camera.y))
+        drawProjectiles(c.projectiles)
         drawName(c.name,character.rect.x,character.rect.y)
         if key[K_c]: #chests only show contents if c is held
             if hovered_data.metadata != None:
