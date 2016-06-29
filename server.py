@@ -1,4 +1,4 @@
-import sys, random, ConfigParser
+import sys, random, ConfigParser, math
 import cPickle as pickle
 from time import sleep
 from weakref import WeakKeyDictionary
@@ -13,7 +13,34 @@ class Data:
         self.metadata = metadata
         if self.id == 9 and self.metadata == None:
             self.metadata = [None for i in range(5)]
+            
+
+class Projectile:
+    def __init__(self, width, height, startpos, speed, traveldistance, angle, color):
+        self.width = width
+        self.height = height
+        self.color = color
+        self.startpos = startpos
+        self.pos = startpos
+        self.distance = 0
+        self.speed = speed
+        self.traveldistance = traveldistance
+        self.angle = angle
         
+    def rad_to_offset(self, radians, offset):
+        x = math.cos(radians) * offset
+        y = math.sin(radians) * offset
+        return [x, y]
+    
+    def add(self, u, v):
+        return [u[i]+v[i] for i in range(len(u))]
+        
+    def update(self):
+        moveamount = self.rad_to_offset(self.angle, self.speed)
+        self.pos = self.add(self.pos, moveamount)
+        self.distance = math.sqrt(math.fabs(self.startpos[0] - self.pos[0]) ** 2 + math.fabs(self.startpos[1] - self.pos[1]) ** 2)
+
+
 def generateWorld():
     world = []
     for x in range(WORLD_WIDTH):
@@ -29,7 +56,7 @@ def generateWorld():
             elif y == WORLD_HEIGHT - 1:
                 world[x][y] = Data(2)
             elif y >= 0.7 * WORLD_HEIGHT:
-               world[x][y] = Data(5)
+                world[x][y] = Data(5)
             elif y >= 0.6 * WORLD_HEIGHT:
                 world[x][y] = Data(4)
             else:
@@ -134,6 +161,10 @@ class ClientChannel(Channel):
     def Network_posChange(self, data):
         self.pos = [data["x"],data["y"]]
         self._server.SendToAll({"action": "players", "players": [p.pos+[p.uuid]+[p.name] for p in self._server.players]})
+        
+    def Network_addProjectile(self, data):
+        #width, height, startpos, speed, traveldistance, angle, color
+        self._server.projectiles.append(Projectile(data["width"], data["height"], data["startpos"], data["speed"], data["traveldistance"], data["angle"], data["color"]))
     
     def Network_name(self, data):
         self.name = data["name"]
@@ -145,6 +176,7 @@ class GameServer(Server):
         Server.__init__(self, *args, **kwargs)
         self.world = generateWorld()
         self.players = WeakKeyDictionary()
+        self.projectiles = []
         print 'Server launched'
     
     def Connected(self, channel, addr):
@@ -165,8 +197,13 @@ class GameServer(Server):
     
     def Launch(self):
         while True:
+            self.SendToAll({"action": "projectiles", "projectiles": [[i.pos, i.width, i.height, i.color] for i in self.projectiles]})
             self.Pump()
-            sleep(0.00001)
+            for i in self.projectiles:
+                if i.distance >= i.traveldistance:
+                    self.projectiles.remove(i)
+                i.update()
+            sleep(0.0165)
 
 TILE_SIZE_X = 16
 TILE_SIZE_Y = 16

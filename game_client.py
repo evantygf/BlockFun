@@ -25,6 +25,7 @@ class Client(ConnectionListener):
         self.Connect((host, port))
         self.players = []
         self.world = None
+        self.projectiles = []
         self.lights = [[0 for i in xrange(WORLD_WIDTH)] for j in xrange(WORLD_HEIGHT)]
     
     def Loop(self):
@@ -50,7 +51,10 @@ class Client(ConnectionListener):
     
     def Network_players(self, data):
         self.players = data["players"]
-    
+        
+    def Network_projectiles(self, data):
+        self.projectiles = data["projectiles"]
+
     def Network_addToInv(self, data):
         addToInv(data["id"], data["amount"])
     
@@ -65,17 +69,18 @@ class Client(ConnectionListener):
 
 #Id is a metaclass for tiles and will be a metaclass for items in the future (such as weapons or tools)
 class Id:
-    def __init__(self, image_path, name, id):
+    def __init__(self, image_path, name, id, type):
         self.image = pygame.image.load(image_path).convert()
         self.rect = self.image.get_rect()
         self.name = name
+        self.type = type
         self.id = id
         ids[id] = self #adds itself to the list of ids
 
 #A tile is an id that can be placed and broken
 class Tile(Id):
-    def __init__(self, image_path, name, id, state, breakable, drops):
-        Id.__init__(self, image_path, name, id)
+    def __init__(self, image_path, name, id, type, state, breakable, drops):
+        Id.__init__(self, image_path, name, id, type)
         self.state = state
         self.breakable = breakable
         self.drops = drops
@@ -132,9 +137,15 @@ class Character:
         self.yVel = 0
         self.progress = 0 #To be used when blocks take time to break
 
+class Projectile:
+    def __init__(self, width, height, pos, color):
+        self.width = width
+        self.height = height
+        self.color = color
+        self.pos = pos
 
 
-def getTile(id):
+def getId(id):
     return ids[id]
 
 def getInvSlot(id, data=None):
@@ -262,9 +273,9 @@ def drawBlocks(camera):
         y = -(camera.y % 16)
         for j in range(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
             try:
-                screen.blit(getTile(c.world[i][j].id).image,[x,y])
+                screen.blit(getId(c.world[i][j].id).image,[x,y])
             except:
-                screen.blit(getTile(0).image,[x,y])
+                screen.blit(getId(0).image,[x,y])
             lightBack.set_alpha(255 - c.lights[i][j])
             screen.blit(lightBack,[x,y])
             y += 16
@@ -304,6 +315,11 @@ def drawChest(metadata,x,y):
             screen.blit(text_surf, (x+8-(chestBar.get_width()/2)-camera.x + 16*i + 2*(i+1) + (16 - inv_font.size(text)[0]), y-18-camera.y))
         else:
             screen.blit(back, (x+8-(chestBar.get_width()/2)-camera.x + 16*i + 2*(i+1), y-18-camera.y))
+            
+def drawProjectiles(projectiles):
+    for i in projectiles:
+        pygame.draw.rect(screen, i[3], (i[0][0] - camera.x, i[0][1] - camera.y, i[1], i[2]))
+
 
 def updateGrass(world, camera=None):
     if camera:
@@ -341,35 +357,35 @@ def setCam(cam, char):
         
 def gravity(char):
     if char.yVel >= 0:
-        if getTile(c.world[(char.rect.left + 1) / 16][char.rect.bottom / 16].id).state == 1 or getTile(c.world[(char.rect.right - 1) / 16][char.rect.bottom / 16].id).state == 1:
+        if getId(c.world[(char.rect.left + 1) / 16][char.rect.bottom / 16].id).state == 1 or getId(c.world[(char.rect.right - 1) / 16][char.rect.bottom / 16].id).state == 1:
             char.jumping = False
             char.yVel = 0
             return
         else:
             char.jumping = True
             char.yVel += .5
-            if getTile(c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0 and getTile(c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0:
+            if getId(c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0:
                 char.rect.y += char.yVel
             else:
                 char.rect.y += 1
     else:
-        if getTile(c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id).state == 1 or getTile(c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id).state == 1:
+        if getId(c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id).state == 1 or getId(c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id).state == 1:
             char.jumping = False
             char.yVel = 0
             return
         else:
             char.jumping = True
             char.yVel += .5
-            if getTile(c.world[(char.rect.left + 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0 and getTile(c.world[(char.rect.right - 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0:
+            if getId(c.world[(char.rect.left + 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0:
                 char.rect.y += char.yVel
-            elif getTile(c.world[(char.rect.left + 1) / 16][(char.rect.y - 1) / 16].id).state == 0 and getTile(c.world[(char.rect.right - 1) / 16][(char.rect.y - 1) / 16].id).state == 0:
+            elif getId(c.world[(char.rect.left + 1) / 16][(char.rect.y - 1) / 16].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][(char.rect.y - 1) / 16].id).state == 0:
                 char.rect.y -= 1
 
 
 def resetPosition():
     character.rect.topleft = ((WORLD_WIDTH_PX-16)/2, 0) #initial position is in the sky in the middle of the map
     character.rect.x = character.rect.x/16*16
-    while not (getTile(c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id).state == 1 or getTile(c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id).state == 1):
+    while not (getId(c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id).state == 1 or getId(c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id).state == 1):
         character.rect.y += 1 #lower player until they hit ground
 
 #constants
@@ -394,19 +410,22 @@ if __name__ == "__main__":
     
     ids = [None for i in range(256)]
     
-    #image_path, name, id, state, breakable, drops
-    sky_tile = Tile("images/tiles/sky.png", "sky", 0, 0, 0, 0)
-    invisible_tile = Tile("images/tiles/invisible.png", "invisible", 1, 1, 0, 1)
-    bedrock_tile = Tile("images/tiles/bedrock.png", "bedrock", 2, 1, 0, 2)
-    grass_tile = Tile("images/tiles/grass.png", "grass", 3, 1, 1, 4)
-    dirt_tile = Tile("images/tiles/dirt.png", "dirt", 4, 1, 1, 4)
-    stone_tile = Tile("images/tiles/stone.png", "stone", 5, 1, 1, 5)
-    sand_tile = Tile("images/tiles/sand.png", "sand", 6, 1, 1, 6)
-    wood_tile = Tile("images/tiles/wood.png", "wood", 7, 0, 1, 7)
-    leaf_tile = Tile("images/tiles/leaf.png", "leaf", 8, 0, 1, 8)
-    chest_tile = Tile("images/tiles/chest.png", "chest", 9, 1, 1, 9)
-    diamond_tile = Tile("images/tiles/diamond ore.png", "diamond ore", 10, 1, 1, 10)
-    torch_tile = Tile("images/tiles/torch.png", "torch", 11, 0, 1, 11)
+    #                image_path,                             name,         id,         type, state, breakable, drops
+    sky_tile = Tile("images/tiles/sky.png",                 "sky",          0,      "block", 0,     0,          0)
+    invisible_tile = Tile("images/tiles/invisible.png",     "invisible",    1,      "block", 1,     0,          1)
+    bedrock_tile = Tile("images/tiles/bedrock.png",         "bedrock",      2,      "block", 1,     0,          2)
+    grass_tile = Tile("images/tiles/grass.png",             "grass",        3,      "block", 1,     1,          4)
+    dirt_tile = Tile("images/tiles/dirt.png",               "dirt",         4,      "block", 1,     1,          4)
+    stone_tile = Tile("images/tiles/stone.png",             "stone",        5,      "block", 1,     1,          5)
+    sand_tile = Tile("images/tiles/sand.png",               "sand",         6,      "block", 1,     1,          6)
+    wood_tile = Tile("images/tiles/wood.png",               "wood",         7,      "block", 0,     1,          7)
+    leaf_tile = Tile("images/tiles/leaf.png",               "leaf",         8,      "block", 0,     1,          8)
+    chest_tile = Tile("images/tiles/chest.png",             "chest",        9,      "block", 1,     1,          9)
+    diamond_tile = Tile("images/tiles/diamond ore.png",     "diamond ore",  10,     "block", 1,     1,          10)
+    torch_tile = Tile("images/tiles/torch.png",             "torch",        11,     "block", 0,     1,          11)
+    
+    pistol_item = Id("images/items/pistol.png",             "pistol",       100,     "item",)
+    
     
     inventoryBar =  pygame.image.load("images/bar.png").convert_alpha()
     chestBar = pygame.image.load("images/bar_small.png").convert_alpha()
@@ -453,6 +472,7 @@ if __name__ == "__main__":
     addToInv(6,100)
     addToInv(2,100)
     addToInv(11,100)
+    addToInv(100,1)
     
     #creates lighting tile
     lightBack = pygame.Surface((16,16)).convert()
@@ -469,36 +489,43 @@ if __name__ == "__main__":
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed()
         hovered_data = c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16]
-        hovered = getTile(hovered_data.id)
+        hovered = getId(hovered_data.id)
         
         if key[K_a]:    
-            if getTile(c.world[(character.rect.left - 1)/16][character.rect.top / 16].id).state == 0 and getTile(c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
+            if getId(c.world[(character.rect.left - 1)/16][character.rect.top / 16].id).state == 0 and getId(c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
                 character.rect.x -= 1
         if key[K_d]:
-            if getTile(c.world[(character.rect.right + 1)/16][character.rect.top / 16].id).state == 0 and getTile(c.world[(character.rect.right + 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
+            if getId(c.world[(character.rect.right + 1)/16][character.rect.top / 16].id).state == 0 and getId(c.world[(character.rect.right + 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
                 character.rect.x += 1
         if key[K_SPACE]:
-            if not character.jumping and (getTile(c.world[(character.rect.left + 1) / 16][character.rect.top / 16 - 1].id).state == 0 and getTile(c.world[(character.rect.right - 1) / 16][character.rect.top / 16 - 1].id).state == 0):
+            if not character.jumping and (getId(c.world[(character.rect.left + 1) / 16][character.rect.top / 16 - 1].id).state == 0 and getId(c.world[(character.rect.right - 1) / 16][character.rect.top / 16 - 1].id).state == 0):
                 character.yVel = -8
                 character.jumping = True
                 character.rect.y -= 16
         #left click
         if mouse_press[0]:
-            if hovered.breakable:
+            if inv[selected]["id"] == 100:
+                #do gun stuff
+                x_distance = mouse_pos[0] + camera.x - character.rect.x
+                y_distance = mouse_pos[1] + camera.y - character.rect.y
+                rotation_angle = math.atan2(y_distance, x_distance)
+                c.Send({"action": "addProjectile", "width": 5, "height": 5, "startpos": character.rect.center, "speed": 10, "traveldistance": 400, "angle": rotation_angle, "color": (0,0,0)})
+            elif hovered.breakable:
                 #addToInv(hovered.drops, 1)
                 c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
                 #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(0)
         #right click
         if mouse_press[2]:
             if hovered.id == 0:
-                if getSlotAmount(selected) != None:
-                    if getSlotAmount(selected) > 0:
-                        char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
-                        block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
-                        if not char_rect.colliderect(block_rect):
-                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": inv[selected]["id"], "metadata": None, "inv": inv[selected]["id"], "amount": -1})
-                            #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(inv[selected]["id"])
-                            #addToInv(inv[selected]["id"], -1)
+                if getId(inv[selected]["id"]).type == "block":
+                    if getSlotAmount(selected) != None:
+                        if getSlotAmount(selected) > 0:
+                            char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
+                            block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
+                            if not char_rect.colliderect(block_rect):
+                                c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": inv[selected]["id"], "metadata": None, "inv": inv[selected]["id"], "amount": -1})
+                                #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(inv[selected]["id"])
+                                #addToInv(inv[selected]["id"], -1)
         for event in pygame.event.get():
             if event.type == QUIT:
                 sys.exit()
@@ -558,10 +585,11 @@ if __name__ == "__main__":
                 screen.blit(character.image, (c.players[i][0]-camera.x,c.players[i][1]-camera.y))
                 drawName(c.players[i][3],c.players[i][0],c.players[i][1])
         screen.blit(character.image, (character.rect.x - camera.x, character.rect.y - camera.y))
+        drawProjectiles(c.projectiles)
         drawName(c.name,character.rect.x,character.rect.y)
         if key[K_c]: #chests only show contents if c is held
             if hovered_data.metadata != None:
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
         drawInventory()
         pygame.display.update()
-        frame += 1
+#         frame += 1
