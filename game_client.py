@@ -141,7 +141,7 @@ class Projectile:
         self.pos = pos
 
 
-def getTile(id):
+def getId(id):
     return ids[id]
 
 def getInvSlot(id, data=None):
@@ -269,9 +269,9 @@ def drawBlocks(camera):
         y = -(camera.y % 16)
         for j in range(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
             try:
-                screen.blit(getTile(c.world[i][j].id).image,[x,y])
+                screen.blit(getId(c.world[i][j].id).image,[x,y])
             except:
-                screen.blit(getTile(0).image,[x,y])
+                screen.blit(getId(0).image,[x,y])
             lightBack.set_alpha(255 - c.lights[i][j])
             screen.blit(lightBack,[x,y])
             y += 16
@@ -348,35 +348,35 @@ def setCam(cam, char):
         
 def gravity(char):
     if char.yVel >= 0:
-        if getTile(c.world[(char.rect.left + 1) / 16][char.rect.bottom / 16].id).state == 1 or getTile(c.world[(char.rect.right - 1) / 16][char.rect.bottom / 16].id).state == 1:
+        if getId(c.world[(char.rect.left + 1) / 16][char.rect.bottom / 16].id).state == 1 or getId(c.world[(char.rect.right - 1) / 16][char.rect.bottom / 16].id).state == 1:
             char.jumping = False
             char.yVel = 0
             return
         else:
             char.jumping = True
             char.yVel += .5
-            if getTile(c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0 and getTile(c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0:
+            if getId(c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0:
                 char.rect.y += char.yVel
             else:
                 char.rect.y += 1
     else:
-        if getTile(c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id).state == 1 or getTile(c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id).state == 1:
+        if getId(c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id).state == 1 or getId(c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id).state == 1:
             char.jumping = False
             char.yVel = 0
             return
         else:
             char.jumping = True
             char.yVel += .5
-            if getTile(c.world[(char.rect.left + 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0 and getTile(c.world[(char.rect.right - 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0:
+            if getId(c.world[(char.rect.left + 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0:
                 char.rect.y += char.yVel
-            elif getTile(c.world[(char.rect.left + 1) / 16][(char.rect.y - 1) / 16].id).state == 0 and getTile(c.world[(char.rect.right - 1) / 16][(char.rect.y - 1) / 16].id).state == 0:
+            elif getId(c.world[(char.rect.left + 1) / 16][(char.rect.y - 1) / 16].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][(char.rect.y - 1) / 16].id).state == 0:
                 char.rect.y -= 1
 
 
 def resetPosition():
     character.rect.topleft = ((WORLD_WIDTH_PX-16)/2, 0) #initial position is in the sky in the middle of the map
     character.rect.x = character.rect.x/16*16
-    while not (getTile(c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id).state == 1 or getTile(c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id).state == 1):
+    while not (getId(c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id).state == 1 or getId(c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id).state == 1):
         character.rect.y += 1 #lower player until they hit ground
 
 #constants
@@ -414,6 +414,9 @@ if __name__ == "__main__":
     chest_tile = Tile("images/tiles/chest.png",             "chest",        9,      "block", 1,     1,          9)
     diamond_tile = Tile("images/tiles/diamond ore.png",     "diamond ore",  10,     "block", 1,     1,          10)
     torch_tile = Tile("images/tiles/torch.png",             "torch",        11,     "block", 0,     1,          11)
+    
+    pistol_item = Id("images/items/pistol.png",             "pistol",       100,     "item",)
+    
     
     inventoryBar =  pygame.image.load("images/bar.png").convert_alpha()
     chestBar = pygame.image.load("images/bar_small.png").convert_alpha()
@@ -460,6 +463,7 @@ if __name__ == "__main__":
     addToInv(6,100)
     addToInv(2,100)
     addToInv(11,100)
+    addToInv(100,1)
     
     #creates lighting tile
     lightBack = pygame.Surface((16,16)).convert()
@@ -476,36 +480,40 @@ if __name__ == "__main__":
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed()
         hovered_data = c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16]
-        hovered = getTile(hovered_data.id)
+        hovered = getId(hovered_data.id)
         
         if key[K_a]:    
-            if getTile(c.world[(character.rect.left - 1)/16][character.rect.top / 16].id).state == 0 and getTile(c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
+            if getId(c.world[(character.rect.left - 1)/16][character.rect.top / 16].id).state == 0 and getId(c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
                 character.rect.x -= 1
         if key[K_d]:
-            if getTile(c.world[(character.rect.right + 1)/16][character.rect.top / 16].id).state == 0 and getTile(c.world[(character.rect.right + 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
+            if getId(c.world[(character.rect.right + 1)/16][character.rect.top / 16].id).state == 0 and getId(c.world[(character.rect.right + 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
                 character.rect.x += 1
         if key[K_SPACE]:
-            if not character.jumping and (getTile(c.world[(character.rect.left + 1) / 16][character.rect.top / 16 - 1].id).state == 0 and getTile(c.world[(character.rect.right - 1) / 16][character.rect.top / 16 - 1].id).state == 0):
+            if not character.jumping and (getId(c.world[(character.rect.left + 1) / 16][character.rect.top / 16 - 1].id).state == 0 and getId(c.world[(character.rect.right - 1) / 16][character.rect.top / 16 - 1].id).state == 0):
                 character.yVel = -8
                 character.jumping = True
                 character.rect.y -= 16
         #left click
         if mouse_press[0]:
-            if hovered.breakable:
+            if inv[selected]["id"] == 100:
+                #do gun stuff
+                pass
+            elif hovered.breakable:
                 #addToInv(hovered.drops, 1)
                 c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
                 #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(0)
         #right click
         if mouse_press[2]:
             if hovered.id == 0:
-                if getSlotAmount(selected) != None:
-                    if getSlotAmount(selected) > 0:
-                        char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
-                        block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
-                        if not char_rect.colliderect(block_rect):
-                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": inv[selected]["id"], "metadata": None, "inv": inv[selected]["id"], "amount": -1})
-                            #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(inv[selected]["id"])
-                            #addToInv(inv[selected]["id"], -1)
+                if getId(inv[selected]["id"]).type == "block":
+                    if getSlotAmount(selected) != None:
+                        if getSlotAmount(selected) > 0:
+                            char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
+                            block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
+                            if not char_rect.colliderect(block_rect):
+                                c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": inv[selected]["id"], "metadata": None, "inv": inv[selected]["id"], "amount": -1})
+                                #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(inv[selected]["id"])
+                                #addToInv(inv[selected]["id"], -1)
         for event in pygame.event.get():
             if event.type == QUIT:
                 sys.exit()
