@@ -504,7 +504,7 @@ if __name__ == "__main__":
                 character.rect.y -= 16
         #left click
         if mouse_press[0]:
-            if inv[selected]["id"] == 100:
+            if getSlotAmount(selected) != 0 and inv[selected]["id"] == 100:
                 #do gun stuff
                 x_distance = mouse_pos[0] + camera.x - character.rect.x
                 y_distance = mouse_pos[1] + camera.y - character.rect.y
@@ -517,8 +517,8 @@ if __name__ == "__main__":
         #right click
         if mouse_press[2]:
             if hovered.id == 0:
-                if getId(inv[selected]["id"]).type == "block":
-                    if getSlotAmount(selected) != None:
+                if getSlotAmount(selected) != 0:
+                    if getId(inv[selected]["id"]).type == "block":
                         if getSlotAmount(selected) > 0:
                             char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
                             block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
