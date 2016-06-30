@@ -1,8 +1,10 @@
 import sys, random, ConfigParser, math
+import pygame.rect
 import cPickle as pickle
 from time import sleep
 from weakref import WeakKeyDictionary
 from uuid import uuid4
+from id_list import id_list
 
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
@@ -16,7 +18,7 @@ class Data:
             
 
 class Projectile:
-    def __init__(self, width, height, startpos, speed, traveldistance, angle, color):
+    def __init__(self, width, height, startpos, speed, traveldistance, angle, color, shooter):
         self.width = width
         self.height = height
         self.color = color
@@ -26,6 +28,7 @@ class Projectile:
         self.speed = speed
         self.traveldistance = traveldistance
         self.angle = angle
+        self.shooter = shooter
         
     def rad_to_offset(self, radians, offset):
         x = math.cos(radians) * offset
@@ -141,6 +144,7 @@ class ClientChannel(Channel):
         Channel.__init__(self, *args, **kwargs)
         self.Send({"action":"world","world":pickle.dumps(self._server.world)})
         self.pos = [0,0]
+        self.health = 100
         self.uuid = uuid4().hex
         self.Send({"action":"uuid","uuid":self.uuid})
         self.name = ""
@@ -160,14 +164,17 @@ class ClientChannel(Channel):
     
     def Network_posChange(self, data):
         self.pos = [data["x"],data["y"]]
-        self._server.SendToAll({"action": "players", "players": [p.pos+[p.uuid]+[p.name] for p in self._server.players]})
+        self._server.SendToAll({"action": "players", "players": [p.pos+[p.uuid]+[p.name]+[p.health] for p in self._server.players]})
         
     def Network_addProjectile(self, data):
         #width, height, startpos, speed, traveldistance, angle, color
-        self._server.projectiles.append(Projectile(data["width"], data["height"], data["startpos"], data["speed"], data["traveldistance"], data["angle"], data["color"]))
+        self._server.projectiles.append(Projectile(data["width"], data["height"], data["startpos"], data["speed"], data["traveldistance"], data["angle"], data["color"], self.uuid))
     
     def Network_name(self, data):
         self.name = data["name"]
+    
+    def Network_health(self, data):
+        self.health = data["health"]
 
 class GameServer(Server):
     channelClass = ClientChannel
@@ -202,7 +209,26 @@ class GameServer(Server):
             for i in self.projectiles:
                 if i.distance >= i.traveldistance:
                     self.projectiles.remove(i)
+                    continue
                 i.update()
+                projectile_rect = pygame.Rect(i.pos, (i.width,i.height))
+                if id_list[self.world[projectile_rect.centerx/16][projectile_rect.centery/16].id][4]:
+                    self.projectiles.remove(i)
+                    continue
+                else:
+                    for j in self.players:
+                        player_rect = pygame.Rect(j.pos,(16,32))
+                        if player_rect.colliderect(projectile_rect):
+                            if i.shooter != j.uuid:
+                                j.health -= 5
+                                j.Send({"action":"healthChange","health":j.health})
+                                self.projectiles.remove(i)
+                                break
+            for i in self.players:
+                if i.health <= 0:
+                    i.health = 100
+                    i.Send({"action":"healthChange","health":i.health})
+                    i.Send({"action":"respawn"})
             sleep(0.0165)
 
 TILE_SIZE_X = 16
