@@ -300,7 +300,13 @@ def drawInventory():
 
 def drawName(name,x,y):
     text_surf = inv_font.render(name, 1, (0,0,0))
-    screen.blit(text_surf, (x+8-(text_surf.get_width()/2)-camera.x, y-10-camera.y))
+    screen.blit(text_surf, (x+8-(text_surf.get_width()/2)-camera.x, y-16-camera.y))
+    
+def drawHealth(health,x,y):
+    health_pixels = int(max(min(health / float(100) * 34, 34), 0))
+    pygame.draw.rect(screen, (255,0,0), (x-9-camera.x,y-5-camera.y,34,4))
+    pygame.draw.rect(screen, (0,255,0), (x-9-camera.x,y-5-camera.y,health_pixels,4))
+
 
 def drawChest(metadata,x,y):
     screen.blit(chestBar, (x+8-(chestBar.get_width()/2)-camera.x, y-20-camera.y))
@@ -587,6 +593,7 @@ if __name__ == "__main__":
         screen.blit(character.image, (character.rect.x - camera.x, character.rect.y - camera.y))
         drawProjectiles(c.projectiles)
         drawName(c.name,character.rect.x,character.rect.y)
+        drawHealth(50,character.rect.x,character.rect.y)
         if key[K_c]: #chests only show contents if c is held
             if hovered_data.metadata != None:
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
