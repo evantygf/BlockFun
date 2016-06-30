@@ -293,20 +293,22 @@ def drawBlocks(camera):
 
  
 def drawInventory():
-    screen.blit(inventoryBar, ((WINDOW_WIDTH - 328) / 2, WINDOW_HEIGHT - 40))
+    initial_x = 5 #(WINDOW_WIDTH - 328) / 2
+    initial_y = 5 #WINDOW_HEIGHT - 40
+    screen.blit(inventoryBar, (initial_x, initial_y))
     back = pygame.Surface((32,32)).convert()
     back.set_alpha(128)
     back.fill((128,128,128)) 
     for i in range(len(inv)):
         if inv[i] is not None:
-            screen.blit(pygame.transform.scale2x(ids[inv[i]["id"]].image), (((WINDOW_WIDTH - 328) / 2) + 32*i + 4*(i+1), WINDOW_HEIGHT - 36))
+            screen.blit(pygame.transform.scale2x(ids[inv[i]["id"]].image), (initial_x + 32*i + 4*(i+1), initial_y+4))
             text = str(inv[i]["quantity"])
             text_surf = inv_font.render(text, 1, (0,0,0))
-            screen.blit(text_surf, (((WINDOW_WIDTH - 328) / 2) + 32*i + 4*(i+1) + (32 - inv_font.size(text)[0]), WINDOW_HEIGHT - 36))
+            screen.blit(text_surf, (initial_x + 32*i + 4*(i+1) + (32 - inv_font.size(text)[0]), initial_y+4))
         else:
-            screen.blit(back, (((WINDOW_WIDTH - 328) / 2) + 32*i + 4*(i+1), WINDOW_HEIGHT - 36))
+            screen.blit(back, (initial_x + 32*i + 4*(i+1), initial_y+4))
     for i in range(4):
-        pygame.draw.rect(screen, (128, 128, 128), (((WINDOW_WIDTH - 328) / 2) + 36 * selected + i, WINDOW_HEIGHT - 40 + i, 40 - 2*i, 40 - 2*i), 1)
+        pygame.draw.rect(screen, (128, 128, 128), (initial_x + 36 * selected + i, initial_y + i, 40 - 2*i, 40 - 2*i), 1)
 
 def drawName(name,x,y):
     text_surf = inv_font.render(name, 1, (0,0,0))
