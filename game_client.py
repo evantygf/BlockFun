@@ -87,11 +87,12 @@ class Id:
 
 #A tile is an id that can be placed and broken
 class Tile(Id):
-    def __init__(self, image_path, name, id, type, state, breakable, drops):
+    def __init__(self, image_path, name, id, type, state, breakable, drops, illuminant):
         Id.__init__(self, image_path, name, id, type)
         self.state = state
         self.breakable = breakable
         self.drops = drops
+        self.illuminant = illuminant
         
 # class Container:
 #     def __init__(self):
@@ -223,7 +224,7 @@ def calculateLight():
     for x in xrange(WORLD_WIDTH):
         current_light = 0
         for y in xrange(WORLD_HEIGHT):
-            if world[x][y].id == 0:
+            if ids[world[x][y].id].illuminant == 1:
                 current_light = 255
                 lights[x][y] = 255
             else:
@@ -236,7 +237,7 @@ def calculateLight():
     for x in xrange(WORLD_WIDTH):
         current_light = 0
         for y in xrange(WORLD_HEIGHT):
-            if world[x][WORLD_HEIGHT-y-1].id == 0:
+            if ids[world[x][WORLD_HEIGHT-y-1].id].illuminant == 1:
                 current_light = 255
                 lights[x][WORLD_HEIGHT-y-1] = 255
             else:
@@ -249,7 +250,7 @@ def calculateLight():
     for y in xrange(WORLD_HEIGHT):
         current_light = 0
         for x in xrange(WORLD_WIDTH):
-            if world[x][y].id == 0:
+            if ids[world[x][y].id].illuminant == 1:
                 current_light = 255
                 lights[x][y] = 255
             else:
@@ -262,7 +263,7 @@ def calculateLight():
     for y in xrange(WORLD_HEIGHT):
         current_light = 0
         for x in xrange(WORLD_WIDTH):
-            if world[WORLD_WIDTH-x-1][y].id == 0:
+            if ids[world[WORLD_WIDTH-x-1][y].id].illuminant == 1:
                 current_light = 255
                 lights[WORLD_WIDTH-x-1][y] = 255
             else:
