@@ -59,6 +59,10 @@ class Client(ConnectionListener):
 
     def Network_addToInv(self, data):
         addToInv(data["id"], data["amount"])
+        try:
+            print getSlotAmount(8)
+        except:
+            print "no slot 10"
     
     def Network_uuid(self, data):
         self.uuid = data["uuid"]
@@ -295,20 +299,26 @@ def drawBlocks(camera):
 def drawInventory():
     initial_x = 5 #(WINDOW_WIDTH - 328) / 2
     initial_y = 5 #WINDOW_HEIGHT - 40
-    screen.blit(inventoryBar, (initial_x, initial_y))
+    for i in range(len(inv)/inv_row):
+        row = i * 36
+        screen.blit(inventoryBar, (initial_x, initial_y+row))
     back = pygame.Surface((32,32)).convert()
     back.set_alpha(128)
     back.fill((128,128,128)) 
     for i in range(len(inv)):
+        row = i/9 * 36
+        mo = i%9
         if inv[i] is not None:
-            screen.blit(pygame.transform.scale2x(ids[inv[i]["id"]].image), (initial_x + 32*i + 4*(i+1), initial_y+4))
+            screen.blit(pygame.transform.scale2x(ids[inv[i]["id"]].image), (initial_x + 32*mo + 4*(mo+1), initial_y+4+row))
             text = str(inv[i]["quantity"])
             text_surf = inv_font.render(text, 1, (0,0,0))
-            screen.blit(text_surf, (initial_x + 32*i + 4*(i+1) + (32 - inv_font.size(text)[0]), initial_y+4))
+            screen.blit(text_surf, (initial_x + 32*mo + 4*(mo+1) + (32 - inv_font.size(text)[0]), initial_y+4+row))
         else:
-            screen.blit(back, (initial_x + 32*i + 4*(i+1), initial_y+4))
+            screen.blit(back, (initial_x + 32*mo + 4*(mo+1), initial_y+4+row))
     for i in range(4):
-        pygame.draw.rect(screen, (128, 128, 128), (initial_x + 36 * selected + i, initial_y + i, 40 - 2*i, 40 - 2*i), 1)
+        row = selected/9 * 36
+        mo = selected%9
+        pygame.draw.rect(screen, (128, 128, 128), (initial_x + 36 * mo + i, initial_y + i + row, 40 - 2*i, 40 - 2*i), 1)
 
 def drawName(name,x,y):
     text_surf = inv_font.render(name, 1, (0,0,0))
@@ -457,7 +467,8 @@ if __name__ == "__main__":
     # breakables = [real_tiles[i] for i in range(len(real_tiles)) if real_tiles[i].breakable]
     # breakables.remove(3) #cant get grass because grass drops dirt
     
-    inv = [None for i in range(9)]
+    inv_row = 9
+    inv = [None for i in range(inv_row*2)]
     
     frame = 0
     
@@ -556,12 +567,12 @@ if __name__ == "__main__":
                 #scroll up
                 if event.button == 4:
                     if selected == 0:
-                        selected = 8
+                        selected = len(inv)-1
                     else:
                         selected -= 1
                 #scroll down
                 elif event.button == 5:
-                    if selected == 8:
+                    if selected == len(inv)-1:
                         selected = 0
                     else:
                         selected += 1
