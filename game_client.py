@@ -23,10 +23,12 @@ from PodSixNet.Connection import connection, ConnectionListener
 class Client(ConnectionListener):
     def __init__(self, host, port):
         self.Connect((host, port))
+        self.health = 100
         self.players = []
         self.world = None
         self.projectiles = []
         self.lights = [[0 for i in xrange(WORLD_WIDTH)] for j in xrange(WORLD_HEIGHT)]
+        self.time_shot = time.time()
     
     def Loop(self):
         self.Pump()
@@ -60,6 +62,12 @@ class Client(ConnectionListener):
     
     def Network_uuid(self, data):
         self.uuid = data["uuid"]
+        
+    def Network_healthChange(self, data):
+        self.health = data["health"]
+        
+    def Network_respawn(self, data):
+        resetPosition()
         
     def Network_error(self, data):
         print data
@@ -416,21 +424,22 @@ if __name__ == "__main__":
     
     ids = [None for i in range(256)]
     
-    #                image_path,                             name,         id,         type, state, breakable, drops
-    sky_tile = Tile("images/tiles/sky.png",                 "sky",          0,      "block", 0,     0,          0)
-    invisible_tile = Tile("images/tiles/invisible.png",     "invisible",    1,      "block", 1,     0,          1)
-    bedrock_tile = Tile("images/tiles/bedrock.png",         "bedrock",      2,      "block", 1,     0,          2)
-    grass_tile = Tile("images/tiles/grass.png",             "grass",        3,      "block", 1,     1,          4)
-    dirt_tile = Tile("images/tiles/dirt.png",               "dirt",         4,      "block", 1,     1,          4)
-    stone_tile = Tile("images/tiles/stone.png",             "stone",        5,      "block", 1,     1,          5)
-    sand_tile = Tile("images/tiles/sand.png",               "sand",         6,      "block", 1,     1,          6)
-    wood_tile = Tile("images/tiles/wood.png",               "wood",         7,      "block", 0,     1,          7)
-    leaf_tile = Tile("images/tiles/leaf.png",               "leaf",         8,      "block", 0,     1,          8)
-    chest_tile = Tile("images/tiles/chest.png",             "chest",        9,      "block", 1,     1,          9)
-    diamond_tile = Tile("images/tiles/diamond ore.png",     "diamond ore",  10,     "block", 1,     1,          10)
-    torch_tile = Tile("images/tiles/torch.png",             "torch",        11,     "block", 0,     1,          11)
+    from id_list import *
     
-    pistol_item = Id("images/items/pistol.png",             "pistol",       100,     "item",)
+    sky_tile = Tile(*sky_id)
+    invisible_tile = Tile(*invisible_id)
+    bedrock_tile = Tile(*bedrock_id)
+    grass_tile = Tile(*grass_id)
+    dirt_tile = Tile(*dirt_id)
+    stone_tile = Tile(*stone_id)
+    sand_tile = Tile(*sand_id)
+    wood_tile = Tile(*wood_id)
+    leaf_tile = Tile(*leaf_id)
+    chest_tile = Tile(*chest_id)
+    diamond_tile = Tile(*diamond_id)
+    torch_tile = Tile(*torch_id)
+    
+    pistol_item = Id(*pistol_id)
     
     
     inventoryBar =  pygame.image.load("images/bar.png").convert_alpha()
@@ -468,6 +477,8 @@ if __name__ == "__main__":
     
     c.name = name
     c.Send({"action": "name", "name": c.name}) #sends username to server
+    
+    c.Send({"action": "health", "health": c.health}) #send initial health value
     
     # print [[c.world[i][j].id for i in range(len(c.world))] for j in range(len(c.world[i]))]
     
@@ -512,10 +523,12 @@ if __name__ == "__main__":
         if mouse_press[0]:
             if getSlotAmount(selected) != 0 and inv[selected]["id"] == 100:
                 #do gun stuff
-                x_distance = mouse_pos[0] + camera.x - character.rect.x
-                y_distance = mouse_pos[1] + camera.y - character.rect.y
-                rotation_angle = math.atan2(y_distance, x_distance)
-                c.Send({"action": "addProjectile", "width": 5, "height": 5, "startpos": character.rect.center, "speed": 10, "traveldistance": 400, "angle": rotation_angle, "color": (0,0,0)})
+                if time.time() - c.time_shot >= 0.33:
+                    x_distance = mouse_pos[0] + camera.x - character.rect.x
+                    y_distance = mouse_pos[1] + camera.y - character.rect.y
+                    rotation_angle = math.atan2(y_distance, x_distance)
+                    c.Send({"action": "addProjectile", "width": 5, "height": 5, "startpos": character.rect.center, "speed": 10, "traveldistance": 400, "angle": rotation_angle, "color": (0,0,0)})
+                    c.time_shot = time.time()
             elif hovered.breakable:
                 #addToInv(hovered.drops, 1)
                 c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
@@ -590,10 +603,11 @@ if __name__ == "__main__":
             if c.players[i][2] != c.uuid: #only use server data to draw other players; our player is drawn client side
                 screen.blit(character.image, (c.players[i][0]-camera.x,c.players[i][1]-camera.y))
                 drawName(c.players[i][3],c.players[i][0],c.players[i][1])
+                drawHealth(c.players[i][4],c.players[i][0],c.players[i][1])
         screen.blit(character.image, (character.rect.x - camera.x, character.rect.y - camera.y))
         drawProjectiles(c.projectiles)
         drawName(c.name,character.rect.x,character.rect.y)
-        drawHealth(50,character.rect.x,character.rect.y)
+        drawHealth(c.health,character.rect.x,character.rect.y)
         if key[K_c]: #chests only show contents if c is held
             if hovered_data.metadata != None:
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
