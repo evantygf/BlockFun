@@ -178,18 +178,18 @@ class GameServer(Server):
         self.world = generateWorld()
         self.players = WeakKeyDictionary()
         self.projectiles = []
-        print 'Server launched'
+        print('Server launched')
     
     def Connected(self, channel, addr):
         self.AddPlayer(channel)
     
     def AddPlayer(self, player):
-        print "New Player" + str(player.addr)
+        print("New Player" + str(player.addr))
         self.players[player] = True
         print "players", [p for p in self.players]
     
     def DelPlayer(self, player):
-        print "Deleting Player" + str(player.addr)
+        print("Deleting Player" + str(player.addr))
         del self.players[player]
 
     

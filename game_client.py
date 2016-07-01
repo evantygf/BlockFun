@@ -214,7 +214,6 @@ def addToInv(id, amount, data=None):
 
 
 def calculateLight():
-    ct = time.time()
     local_ids = ids
     lights = [[0 for i in xrange(WORLD_WIDTH)] for j in xrange(WORLD_HEIGHT)]
     world = c.world
@@ -266,7 +265,6 @@ def calculateLight():
                     lights[WORLD_WIDTH-x-1][y] = current_light2
                 if lights[WORLD_WIDTH-x-1][y] == current_light2 and local_ids[world[WORLD_WIDTH-x-1][y].id].state == 1:
                     current_light2 -= 25
-    print "Lighting update took " + str(time.time() - ct) + " seconds"
     return lights
                 
 def drawBlocks(camera):
