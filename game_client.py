@@ -380,9 +380,12 @@ def gravity(char):
         else:
             char.jumping = True
             char.yVel += .5
-            if ids[c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id].state == 0 and ids[c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id].state == 0:
-                char.rect.y += char.yVel
-            else:
+            try:
+                if ids[c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id].state == 0 and ids[c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id].state == 0:
+                    char.rect.y += char.yVel
+                else:
+                    char.rect.y += 1
+            except:
                 char.rect.y += 1
     else:
         if ids[c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id].state == 1 or ids[c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id].state == 1:
