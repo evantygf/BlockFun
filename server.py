@@ -15,6 +15,7 @@
 
 import sys, random, ConfigParser, math
 import pygame.rect
+import pygame._view
 import cPickle as pickle
 from time import sleep
 from weakref import WeakKeyDictionary
