@@ -5,7 +5,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.argv.append('py2exe')
     setup(
-        options = {'py2exe': {'bundle_files': 1, 'compressed': True}},
+        options = {'py2exe': {'bundle_files': 1, 'compressed': True, 'excludes': ['Tkconstants', 'Tkinter'], 'dll_excludes': ['w9xpopen.exe']}},
         console = [{'script': "server.py"}],
         zipfile = None,
     )
