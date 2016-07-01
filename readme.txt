@@ -1,6 +1,7 @@
 Block Fun
 
 Requires Python 2.7 and Pygame 1.9 to run and py2exe to build. Will not work on python 3 currently.
+Run server and then game_client to play.
 
 Controls:
 "A" to move left
