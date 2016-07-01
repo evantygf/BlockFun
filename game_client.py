@@ -59,10 +59,6 @@ class Client(ConnectionListener):
 
     def Network_addToInv(self, data):
         addToInv(data["id"], data["amount"])
-        try:
-            print getSlotAmount(8)
-        except:
-            print "no slot 10"
     
     def Network_uuid(self, data):
         self.uuid = data["uuid"]
