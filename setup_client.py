@@ -60,10 +60,10 @@ class BuildExe:
  
         #Extra/excludes python modules
         self.extra_modules = []
-        self.exclude_modules = []
+        self.exclude_modules = ['Tkconstants', 'Tkinter']
         
         #DLL Excludes
-        self.exclude_dll = ['']
+        self.exclude_dll = ['w9xpopen.exe']
         #python scripts (strings) to be included, seperated by a comma
         self.extra_scripts = []
  
