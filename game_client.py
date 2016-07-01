@@ -220,6 +220,7 @@ def calculateLight():
     world = c.world
     for x in xrange(WORLD_WIDTH):
         current_light = 0
+        current_light2 = 0
         for y in xrange(WORLD_HEIGHT):
             if local_ids[world[x][y].id].illuminant == 1:
                 current_light = 255
@@ -231,21 +232,19 @@ def calculateLight():
                     lights[x][y] = current_light
                 if lights[x][y] == current_light and local_ids[world[x][y].id].state == 1:
                     current_light -= 25
-    for x in xrange(WORLD_WIDTH):
-        current_light = 0
-        for y in xrange(WORLD_HEIGHT):
             if local_ids[world[x][WORLD_HEIGHT-y-1].id].illuminant == 1:
-                current_light = 255
+                current_light2 = 255
                 lights[x][WORLD_HEIGHT-y-1] = 255
             else:
-                if lights[x][WORLD_HEIGHT-y-1] > current_light:
-                    current_light = lights[x][WORLD_HEIGHT-y-1]
-                elif current_light != 0:
-                    lights[x][WORLD_HEIGHT-y-1] = current_light
-                if lights[x][WORLD_HEIGHT-y-1] == current_light and local_ids[world[x][WORLD_HEIGHT-y-1].id].state == 1:
-                    current_light -= 25
+                if lights[x][WORLD_HEIGHT-y-1] > current_light2:
+                    current_light2 = lights[x][WORLD_HEIGHT-y-1]
+                elif current_light2 != 0:
+                    lights[x][WORLD_HEIGHT-y-1] = current_light2
+                if lights[x][WORLD_HEIGHT-y-1] == current_light2 and local_ids[world[x][WORLD_HEIGHT-y-1].id].state == 1:
+                    current_light2 -= 25
     for y in xrange(WORLD_HEIGHT):
         current_light = 0
+        current_light2 = 0
         for x in xrange(WORLD_WIDTH):
             if local_ids[world[x][y].id].illuminant == 1:
                 current_light = 255
@@ -257,19 +256,16 @@ def calculateLight():
                     lights[x][y] = current_light
                 if lights[x][y] == current_light and local_ids[world[x][y].id].state == 1:
                     current_light -= 25
-    for y in xrange(WORLD_HEIGHT):
-        current_light = 0
-        for x in xrange(WORLD_WIDTH):
             if local_ids[world[WORLD_WIDTH-x-1][y].id].illuminant == 1:
-                current_light = 255
+                current_light2 = 255
                 lights[WORLD_WIDTH-x-1][y] = 255
             else:
-                if lights[WORLD_WIDTH-x-1][y] > current_light:
-                    current_light = lights[WORLD_WIDTH-x-1][y]
-                elif current_light != 0:
-                    lights[WORLD_WIDTH-x-1][y] = current_light
-                if lights[WORLD_WIDTH-x-1][y] == current_light and local_ids[world[WORLD_WIDTH-x-1][y].id].state == 1:
-                    current_light -= 25
+                if lights[WORLD_WIDTH-x-1][y] > current_light2:
+                    current_light2 = lights[WORLD_WIDTH-x-1][y]
+                elif current_light2 != 0:
+                    lights[WORLD_WIDTH-x-1][y] = current_light2
+                if lights[WORLD_WIDTH-x-1][y] == current_light2 and local_ids[world[WORLD_WIDTH-x-1][y].id].state == 1:
+                    current_light2 -= 25
     print "Lighting update took " + str(time.time() - ct) + " seconds"
     return lights
                 
