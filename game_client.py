@@ -408,8 +408,8 @@ def resetPosition():
         character.rect.y += 1 #lower player until they hit ground
 
 #constants
-WINDOW_WIDTH = 640
-WINDOW_HEIGHT = 480
+WINDOW_WIDTH = 640 #default value; can be changed in config
+WINDOW_HEIGHT = 480 #default value; can be changed in config
 TILE_SIZE_X = 16
 TILE_SIZE_Y = 16
 WORLD_WIDTH_PX = 2048
@@ -418,6 +418,12 @@ WORLD_WIDTH = WORLD_WIDTH_PX/TILE_SIZE_X
 WORLD_HEIGHT = WORLD_HEIGHT_PX/TILE_SIZE_Y
 
 if __name__ == "__main__":
+    Config = ConfigParser.ConfigParser()
+    Config.read("config.ini")
+    WINDOW_WIDTH = int(Config.get("display", "width"))
+    WINDOW_HEIGHT = int(Config.get("display", "height"))
+    
+    
     pygame.init()
     pygame.display.set_caption("Block Fun")
     pygame.display.set_icon(pygame.image.load("images/tiles/grass.png"))
@@ -465,8 +471,7 @@ if __name__ == "__main__":
     
     selected = 0
     
-    Config = ConfigParser.ConfigParser()
-    Config.read("config.ini")
+
     ip = Config.get("connection", "ip")
     port = int(Config.get("connection", "port"))
     name = Config.get("connection", "name")
