@@ -5,16 +5,10 @@ from time import sleep
 from weakref import WeakKeyDictionary
 from uuid import uuid4
 from id_list import id_list
+from data import Data
 
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
-
-class Data:
-    def __init__(self, id, metadata=None):
-        self.id = id
-        self.metadata = metadata
-        if self.id == 9 and self.metadata == None:
-            self.metadata = [None for i in range(5)]
             
 
 class Projectile:

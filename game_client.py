@@ -18,6 +18,7 @@ import pygame._view
 import cPickle as pickle
 from pygame.locals import *
 from PodSixNet.Connection import connection, ConnectionListener
+from data import Data
 
 #Networking class
 class Client(ConnectionListener):
@@ -47,6 +48,7 @@ class Client(ConnectionListener):
     def Network_blockChange(self, data):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
         threading.Thread(target=self.lightThread).start()
+        updateGrass(self.world, camera)
     
     def Network_posChange(self, data):
         pass
@@ -130,12 +132,6 @@ class Tile(Id):
 
 
 #Data is an id that has metadata (such as what items are in a chest)
-class Data:
-    def __init__(self, id, metadata=None):
-        self.id = id
-        self.metadata = metadata
-        if self.id == 9 and self.metadata == None:
-            self.metadata = [None for i in range(5)]
         
 class Character:
     def __init__(self, image_path, name):
@@ -283,9 +279,9 @@ def drawBlocks(camera):
         y = -(camera.y % 16)
         for j in range(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
             try:
-                screen.blit(getId(c.world[i][j].id).image,[x,y])
+                screen.blit(ids[c.world[i][j].id].image,[x,y])
             except:
-                screen.blit(getId(0).image,[x,y])
+                screen.blit(ids[0].image,[x,y])
             lightBack.set_alpha(255 - c.lights[i][j])
             screen.blit(lightBack,[x,y])
             y += 16
@@ -381,28 +377,28 @@ def setCam(cam, char):
         
 def gravity(char):
     if char.yVel >= 0:
-        if getId(c.world[(char.rect.left + 1) / 16][char.rect.bottom / 16].id).state == 1 or getId(c.world[(char.rect.right - 1) / 16][char.rect.bottom / 16].id).state == 1:
+        if ids[c.world[(char.rect.left + 1) / 16][char.rect.bottom / 16].id].state == 1 or ids[c.world[(char.rect.right - 1) / 16][char.rect.bottom / 16].id].state == 1:
             char.jumping = False
             char.yVel = 0
             return
         else:
             char.jumping = True
             char.yVel += .5
-            if getId(c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id).state == 0:
+            if ids[c.world[(char.rect.left + 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id].state == 0 and ids[c.world[(char.rect.right - 1) / 16][int((char.rect.bottom + char.yVel) / 16)].id].state == 0:
                 char.rect.y += char.yVel
             else:
                 char.rect.y += 1
     else:
-        if getId(c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id).state == 1 or getId(c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id).state == 1:
+        if ids[c.world[(char.rect.left + 1) / 16][char.rect.y / 16 + 1].id].state == 1 or ids[c.world[(char.rect.right - 1) / 16][char.rect.y / 16 + 1].id].state == 1:
             char.jumping = False
             char.yVel = 0
             return
         else:
             char.jumping = True
             char.yVel += .5
-            if getId(c.world[(char.rect.left + 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][int((char.rect.y + char.yVel) / 16)].id).state == 0:
+            if ids[c.world[(char.rect.left + 1) / 16][int((char.rect.y + char.yVel) / 16)].id].state == 0 and ids[c.world[(char.rect.right - 1) / 16][int((char.rect.y + char.yVel) / 16)].id].state == 0:
                 char.rect.y += char.yVel
-            elif getId(c.world[(char.rect.left + 1) / 16][(char.rect.y - 1) / 16].id).state == 0 and getId(c.world[(char.rect.right - 1) / 16][(char.rect.y - 1) / 16].id).state == 0:
+            elif ids[c.world[(char.rect.left + 1) / 16][(char.rect.y - 1) / 16].id].state == 0 and ids[c.world[(char.rect.right - 1) / 16][(char.rect.y - 1) / 16].id].state == 0:
                 char.rect.y -= 1
 
 
@@ -483,7 +479,6 @@ if __name__ == "__main__":
     c = Client(ip, port) #connect to server
     while c.world == None: #wait for world from server
         c.Loop()
-        
     c.lights = calculateLight() #calculates initial lighting
     
     c.name = name
@@ -517,16 +512,16 @@ if __name__ == "__main__":
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed()
         hovered_data = c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16]
-        hovered = getId(hovered_data.id)
+        hovered = ids[hovered_data.id]
         
         if key[K_a]:    
-            if getId(c.world[(character.rect.left - 1)/16][character.rect.top / 16].id).state == 0 and getId(c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
+            if ids[c.world[(character.rect.left - 1)/16][character.rect.top / 16].id].state == 0 and ids[c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id].state == 0:
                 character.rect.x -= 1
         if key[K_d]:
-            if getId(c.world[(character.rect.right + 1)/16][character.rect.top / 16].id).state == 0 and getId(c.world[(character.rect.right + 1) / 16][(character.rect.bottom - 1) / 16].id).state == 0:
+            if ids[c.world[(character.rect.right + 1)/16][character.rect.top / 16].id].state == 0 and ids[c.world[(character.rect.right + 1) / 16][(character.rect.bottom - 1) / 16].id].state == 0:
                 character.rect.x += 1
         if key[K_SPACE]:
-            if not character.jumping and (getId(c.world[(character.rect.left + 1) / 16][character.rect.top / 16 - 1].id).state == 0 and getId(c.world[(character.rect.right - 1) / 16][character.rect.top / 16 - 1].id).state == 0):
+            if not character.jumping and (ids[c.world[(character.rect.left + 1) / 16][character.rect.top / 16 - 1].id].state == 0 and ids[c.world[(character.rect.right - 1) / 16][character.rect.top / 16 - 1].id].state == 0):
                 character.yVel = -8
                 character.jumping = True
                 character.rect.y -= 16
@@ -548,7 +543,7 @@ if __name__ == "__main__":
         if mouse_press[2]:
             if hovered.id == 0:
                 if getSlotAmount(selected) != 0:
-                    if getId(inv[selected]["id"]).type == "block":
+                    if ids[inv[selected]["id"]].type == "block":
                         if getSlotAmount(selected) > 0:
                             char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
                             block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
@@ -607,7 +602,6 @@ if __name__ == "__main__":
                         
         setCam(camera, character)
         gravity(character)
-        updateGrass(c.world, camera)
         drawBlocks(camera)
         pygame.draw.rect(screen, (0,0,0), ((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 16, 16), 1)
         for i in range(len(c.players)):
