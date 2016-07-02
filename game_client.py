@@ -587,30 +587,35 @@ if __name__ == "__main__":
             if event.type == KEYDOWN:
                 #chest controls
                 if event.key == K_1:
-                    if getSlotAmount(0,data=hovered_data.metadata) > 0:
-                        hover_id = hovered_data.metadata[0]["id"]
-                        addToInv(hover_id,-1,data=hovered_data.metadata)
-                        c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
+                    if hovered_data.id == 9:
+                        if getSlotAmount(0,data=hovered_data.metadata) > 0:
+                            hover_id = hovered_data.metadata[0]["id"]
+                            addToInv(hover_id,-1,data=hovered_data.metadata)
+                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
                 if event.key == K_2:
-                    if getSlotAmount(1,data=hovered_data.metadata) > 0:
-                        hover_id = hovered_data.metadata[1]["id"]
-                        addToInv(hover_id,-1,data=hovered_data.metadata)
-                        c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
+                    if hovered_data.id == 9:
+                        if getSlotAmount(1,data=hovered_data.metadata) > 0:
+                            hover_id = hovered_data.metadata[1]["id"]
+                            addToInv(hover_id,-1,data=hovered_data.metadata)
+                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
                 if event.key == K_3:
-                    if getSlotAmount(2,data=hovered_data.metadata) > 0:
-                        hover_id = hovered_data.metadata[2]["id"]
-                        addToInv(hover_id,-1,data=hovered_data.metadata)
-                        c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
+                    if hovered_data.id == 9:
+                        if getSlotAmount(2,data=hovered_data.metadata) > 0:
+                            hover_id = hovered_data.metadata[2]["id"]
+                            addToInv(hover_id,-1,data=hovered_data.metadata)
+                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
                 if event.key == K_4:
-                    if getSlotAmount(3,data=hovered_data.metadata) > 0:
-                        hover_id = hovered_data.metadata[3]["id"]
-                        addToInv(hover_id,-1,data=hovered_data.metadata)
-                        c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
+                    if hovered_data.id == 9:
+                        if getSlotAmount(3,data=hovered_data.metadata) > 0:
+                            hover_id = hovered_data.metadata[3]["id"]
+                            addToInv(hover_id,-1,data=hovered_data.metadata)
+                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
                 if event.key == K_5:
-                    if getSlotAmount(4,data=hovered_data.metadata) > 0:
-                        hover_id = hovered_data.metadata[4]["id"]
-                        addToInv(hover_id,-1,data=hovered_data.metadata)
-                        c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
+                    if hovered_data.id == 9:
+                        if getSlotAmount(4,data=hovered_data.metadata) > 0:
+                            hover_id = hovered_data.metadata[4]["id"]
+                            addToInv(hover_id,-1,data=hovered_data.metadata)
+                            c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": hovered_data.id, "metadata": hovered_data.metadata, "inv": hover_id, "amount": 1})
                 if event.key == K_q:
                     if hovered_data.id == 9:
                         if getSlotAmount(selected) > 0:
