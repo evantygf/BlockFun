@@ -271,10 +271,9 @@ def drawBlocks(camera):
         y = -(camera.y % 16)
         for j in range(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
             try:
-                screen.blit(ids[c.world[i][j].id].image,[x,y])
+                screen.blit(blockRenders[c.world[i][j].id][255 - c.lights[i][j]],[x,y])
             except:
-                screen.blit(ids[0].image,[x,y])
-            screen.blit(lightBacks[255 - c.lights[i][j]],[x,y])
+                screen.blit(blockRenders[0][255 - c.lights[i][j]],[x,y])
             y += 16
         x += 16
 
@@ -418,11 +417,14 @@ if __name__ == "__main__":
     WINDOW_WIDTH = int(Config.get("display", "width"))
     WINDOW_HEIGHT = int(Config.get("display", "height"))
     
-    
     pygame.init()
     pygame.display.set_caption("Block Fun")
     pygame.display.set_icon(pygame.image.load("images/tiles/grass.png"))
-    screen = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
+    flags = 0
+    fullscreen_option = bool(int(Config.get("display", "fullscreen")))
+    if fullscreen_option:
+        flags = flags | FULLSCREEN
+    screen = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT), flags)
     
     inv_font =  pygame.font.Font(None, 14)
     
@@ -479,6 +481,7 @@ if __name__ == "__main__":
     while c.world == None: #wait for world from server
         c.Loop()
     c.lights = calculateLight() #calculates initial lighting
+    updateGrass(c.world) #initial grass update
     
     c.name = name
     c.Send({"action": "name", "name": c.name}) #sends username to server
@@ -503,7 +506,17 @@ if __name__ == "__main__":
     lightBacks = [lightBack.copy() for i in xrange(256)]
     for i in xrange(len(lightBacks)):
         lightBacks[i].set_alpha(i)
-    
+        
+    blockRenders = []
+    for i in range(len(ids)):
+        blockRenders.append([])
+        try:
+            for j in xrange(256):
+                block_copy = ids[i].image.copy()
+                block_copy.blit(lightBacks[j], (0,0))
+                blockRenders[i].append(block_copy)
+        except:
+            pass
     
     #main game loop
     while True:
