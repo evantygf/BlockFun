@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pygame, sys, random, math, ConfigParser, time, threading
+import pygame, sys, math, ConfigParser, time
 import pygame._view
 import cPickle as pickle
 from pygame.locals import *
@@ -35,7 +35,7 @@ class Client(ConnectionListener):
         self.Pump()
         connection.Pump()
     
-    def lightThread(self):
+    def lights(self):
         self.lights = calculateLight()
     
     def Network(self, data):
@@ -47,7 +47,8 @@ class Client(ConnectionListener):
 
     def Network_blockChange(self, data):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
-        threading.Thread(target=self.lightThread).start()
+#         threading.Thread(target=self.lightThread).start()
+        self.lights() #no longer need threads because of speed improvements
         updateGrass(self.world, camera)
     
     def Network_posChange(self, data):
@@ -276,8 +277,7 @@ def drawBlocks(camera):
                 screen.blit(ids[c.world[i][j].id].image,[x,y])
             except:
                 screen.blit(ids[0].image,[x,y])
-            lightBack.set_alpha(255 - c.lights[i][j])
-            screen.blit(lightBack,[x,y])
+            screen.blit(lightBacks[255 - c.lights[i][j]],[x,y])
             y += 16
         x += 16
 
@@ -502,6 +502,11 @@ if __name__ == "__main__":
     #creates lighting tile
     lightBack = pygame.Surface((16,16)).convert()
     lightBack.fill((0,0,0))
+    
+    lightBacks = [lightBack.copy() for i in xrange(256)]
+    for i in xrange(len(lightBacks)):
+        lightBacks[i].set_alpha(i)
+    
     
     #main game loop
     while True:
