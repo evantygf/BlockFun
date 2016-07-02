@@ -35,9 +35,6 @@ class Client(ConnectionListener):
         self.Pump()
         connection.Pump()
     
-    def lights(self):
-        self.lights = calculateLight()
-    
     def Network(self, data):
         #print 'network:', data
         pass
@@ -48,7 +45,7 @@ class Client(ConnectionListener):
     def Network_blockChange(self, data):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
 #         threading.Thread(target=self.lightThread).start()
-        self.lights() #no longer need threads because of speed improvements
+        self.lights = calculateLight() #no longer need threads because of speed improvements
         updateGrass(self.world, camera)
     
     def Network_posChange(self, data):
