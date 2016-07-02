@@ -276,8 +276,7 @@ def drawBlocks(camera):
                 screen.blit(ids[c.world[i][j].id].image,[x,y])
             except:
                 screen.blit(ids[0].image,[x,y])
-            lightBack.set_alpha(255 - c.lights[i][j])
-            screen.blit(lightBack,[x,y])
+            screen.blit(lightBacks[255 - c.lights[i][j]],[x,y])
             y += 16
         x += 16
 
@@ -502,6 +501,11 @@ if __name__ == "__main__":
     #creates lighting tile
     lightBack = pygame.Surface((16,16)).convert()
     lightBack.fill((0,0,0))
+    
+    lightBacks = [lightBack.copy() for i in xrange(256)]
+    for i in xrange(len(lightBacks)):
+        lightBacks[i].set_alpha(i)
+    
     
     #main game loop
     while True:
