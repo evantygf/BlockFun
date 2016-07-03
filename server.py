@@ -244,16 +244,21 @@ class GameServer(Server):
 
 TILE_SIZE_X = 16
 TILE_SIZE_Y = 16
-WORLD_WIDTH = 128
-WORLD_HEIGHT = 128
+WORLD_WIDTH = 128 #can be changed in config
+WORLD_HEIGHT = 128 #can be changed in config
 WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X
 WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y
 
 if __name__ == "__main__":
     Config = ConfigParser.ConfigParser()
-    Config.read("config.ini")
+    Config.read("server.ini")
     ip = Config.get("connection", "ip")
     port = int(Config.get("connection", "port"))
+    
+    WORLD_WIDTH = int(Config.get("world", "worldwidth"))
+    WORLD_HEIGHT = int(Config.get("world", "worldheight"))
+    WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X
+    WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y
     
     s = GameServer(localaddr=(ip, port))
     s.Launch()

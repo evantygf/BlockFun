@@ -420,7 +420,7 @@ WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y #changes based on server world data
 
 if __name__ == "__main__":
     Config = ConfigParser.ConfigParser()
-    Config.read("config.ini")
+    Config.read("game.ini")
     WINDOW_WIDTH = int(Config.get("display", "width"))
     WINDOW_HEIGHT = int(Config.get("display", "height"))
     
