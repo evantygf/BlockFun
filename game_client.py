@@ -46,9 +46,9 @@ class Client(ConnectionListener):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
 #         threading.Thread(target=self.lightThread).start()
         self.lights = calculateLight() #no longer need threads because of speed improvements
-        updateGrass(self.world, camera)
-        drawBlock(camera, world_surface, (data["x"],data["y"]))
-        drawLighting(camera, world_surface, (data["x"],data["y"]))
+        updateGrass(self.world, (data["x"],data["y"]))
+        drawBlock(world_surface, (data["x"],data["y"]))
+        drawLighting(world_surface, (data["x"],data["y"]))
     
     def Network_posChange(self, data):
         pass
@@ -267,18 +267,18 @@ def calculateLight():
                     current_light2 -= 25
     return lights
                 
-def drawBlocks(camera, surface):
+def drawBlocks(surface):
     for i in xrange(WORLD_WIDTH):
         for j in xrange(WORLD_HEIGHT):
             surface.blit(blockRenders[c.world[i][j].id][255 - c.lights[i][j]],[i*16,j*16])
             
-def drawBlock(camera, surface, pos):
+def drawBlock(surface, pos):
     surface.blit(blockRenders[c.world[pos[0]][pos[1]].id][255 - c.lights[pos[0]][pos[1]]],[pos[0]*16,pos[1]*16])
     
-def drawLighting(camera, surface, pos):
+def drawLighting(surface, pos):
     for i in xrange(max(pos[0]-10, 0),min(pos[0]+11, WORLD_WIDTH)):
         for j in xrange(max(pos[1]-10, 0),min(pos[1]+11, WORLD_HEIGHT)):
-            drawBlock(camera, surface, (i,j))
+            drawBlock(surface, (i,j))
  
 def drawInventory():
     initial_x = 5 #(WINDOW_WIDTH - 328) / 2
@@ -333,23 +333,15 @@ def drawProjectiles(projectiles):
         pygame.draw.rect(screen, i[3], (i[0][0] - camera.x, i[0][1] - camera.y, i[1], i[2]))
 
 
-def updateGrass(world, camera=None):
-    if camera:
-        x = -(camera.x % 16)
-        for i in xrange(int(math.floor(camera.x/16.0)), int(math.ceil((camera.x + camera.width)/16.0))):
-            y = -(camera.y % 16)
-            for j in xrange(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
-                try:
-                    if world[i][j].id == 4 and world[i][j-1].id == 0:
-                        world[i][j] = Data(3)
-                        drawBlock(camera, world_surface, (i,j))
-                    if world[i][j].id == 3 and world[i][j-1].id != 0:
-                        world[i][j] = Data(4)
-                        drawBlock(camera, world_surface, (i,j))
-                except:
-                    pass
-                y += 16
-            x += 16
+def updateGrass(world, pos=None):
+    if pos:
+        for i in xrange(2):
+            if world[pos[0]][pos[1]+i].id == 4 and world[pos[0]][pos[1]-1+i].id == 0:
+                world[pos[0]][pos[1]+i] = Data(3)
+                drawBlock(world_surface, (pos[0],pos[1]+i))
+            if world[pos[0]][pos[1]+i].id == 3 and world[pos[0]][pos[1]-1+i].id != 0:
+                world[pos[0]][pos[1]+i] = Data(4)
+                drawBlock(world_surface, (pos[0],pos[1]+i))
     else:
         for x in xrange(WORLD_WIDTH):
             for y in xrange(WORLD_HEIGHT):
@@ -525,11 +517,12 @@ if __name__ == "__main__":
             pass
         
     world_surface = pygame.Surface((WORLD_WIDTH_PX,WORLD_HEIGHT_PX)).convert()
-    drawBlocks(camera, world_surface)
+    drawBlocks(world_surface)
     
     #main game loop
     while True:
         clock.tick(60)
+        ct = time.time()
         c.Loop()
         c.Send({"action": "posChange", "x": character.rect.x, "y": character.rect.y}) #sends character position to server
         
@@ -649,4 +642,5 @@ if __name__ == "__main__":
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
         drawInventory()
         pygame.display.update()
+        print time.time() - ct
 #         frame += 1
