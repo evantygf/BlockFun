@@ -28,7 +28,7 @@ class Client(ConnectionListener):
         self.players = []
         self.world = None
         self.projectiles = []
-        self.lights = [[0 for i in xrange(WORLD_WIDTH)] for j in xrange(WORLD_HEIGHT)]
+        self.lights = None
         self.time_shot = time.time()
     
     def Loop(self):
@@ -40,7 +40,17 @@ class Client(ConnectionListener):
         pass
     
     def Network_world(self, data):
-        self.world = pickle.loads(data["world"])
+#         self.world = pickle.loads(data["world"])
+        world = data["world"]
+        
+        global WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH_PX, WORLD_HEIGHT_PX
+        WORLD_WIDTH = len(data["world"])
+        WORLD_HEIGHT = len(data["world"][0])
+        WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X
+        WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y
+        
+        self.world = [[Data(*world[i][j]) for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]
+        self.lights = [[0 for i in xrange(WORLD_WIDTH)] for j in xrange(WORLD_HEIGHT)]
 
     def Network_blockChange(self, data):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
@@ -402,10 +412,11 @@ WINDOW_WIDTH = 640 #default value; can be changed in config
 WINDOW_HEIGHT = 480 #default value; can be changed in config
 TILE_SIZE_X = 16
 TILE_SIZE_Y = 16
-WORLD_WIDTH_PX = 2048
-WORLD_HEIGHT_PX = 2048
-WORLD_WIDTH = WORLD_WIDTH_PX/TILE_SIZE_X
-WORLD_HEIGHT = WORLD_HEIGHT_PX/TILE_SIZE_Y
+WORLD_WIDTH = 128 #changes based on server world data
+WORLD_HEIGHT = 128 #changes based on server world data
+WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X #changes based on server world data
+WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y #changes based on server world data
+
 
 if __name__ == "__main__":
     Config = ConfigParser.ConfigParser()
@@ -476,6 +487,7 @@ if __name__ == "__main__":
     c = Client(ip, port) #connect to server
     while c.world == None: #wait for world from server
         c.Loop()
+    
     c.lights = calculateLight() #calculates initial lighting
     updateGrass(c.world) #initial grass update
     

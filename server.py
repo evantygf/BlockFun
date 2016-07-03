@@ -152,7 +152,8 @@ class ClientChannel(Channel):
     """
     def __init__(self, *args, **kwargs):
         Channel.__init__(self, *args, **kwargs)
-        self.Send({"action":"world","world":pickle.dumps(self._server.world)})
+#         self.Send({"action":"world","world":pickle.dumps(self._server.world)})
+        self.Send({"action":"world","world":[[(self._server.world[i][j].id, self._server.world[i][j].metadata) for j in range(WORLD_HEIGHT)] for i in range(WORLD_WIDTH)]})
         self.pos = [0,0]
         self.health = 100
         self.uuid = uuid4().hex
@@ -243,10 +244,10 @@ class GameServer(Server):
 
 TILE_SIZE_X = 16
 TILE_SIZE_Y = 16
-WORLD_WIDTH_PX = 2048
-WORLD_HEIGHT_PX = 2048
-WORLD_WIDTH = WORLD_WIDTH_PX/TILE_SIZE_X
-WORLD_HEIGHT = WORLD_HEIGHT_PX/TILE_SIZE_Y
+WORLD_WIDTH = 128
+WORLD_HEIGHT = 128
+WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X
+WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y
 
 if __name__ == "__main__":
     Config = ConfigParser.ConfigParser()
