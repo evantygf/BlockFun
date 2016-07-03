@@ -46,7 +46,9 @@ class Client(ConnectionListener):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
 #         threading.Thread(target=self.lightThread).start()
         self.lights = calculateLight() #no longer need threads because of speed improvements
-        updateGrass(self.world, camera)
+        updateGrass(self.world, (data["x"],data["y"]))
+        drawBlock(world_surface, (data["x"],data["y"]))
+        drawLighting(world_surface, (data["x"],data["y"]))
     
     def Network_posChange(self, data):
         pass
@@ -193,7 +195,7 @@ def addToInv(id, amount, data=None):
             else:
                 inv[indexer.get(id)]["quantity"] += amount
         else:
-            for i in range(len(inv)):
+            for i in xrange(len(inv)):
                 if inv[i] is None:
                     inv[i] = {"id": id, "quantity": amount}
                     break
@@ -205,7 +207,7 @@ def addToInv(id, amount, data=None):
             else:
                 data[indexer.get(id)]["quantity"] += amount
         else:
-            for i in range(len(data)):
+            for i in xrange(len(data)):
                 if data[i] is None:
                     data[i] = {"id": id, "quantity": amount}
                     break
@@ -265,29 +267,29 @@ def calculateLight():
                     current_light2 -= 25
     return lights
                 
-def drawBlocks(camera):
-    x = -(camera.x % 16)
-    for i in range(int(math.floor(camera.x/16.0)), int(math.ceil((camera.x + camera.width)/16.0))):
-        y = -(camera.y % 16)
-        for j in range(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
-            try:
-                screen.blit(blockRenders[c.world[i][j].id][255 - c.lights[i][j]],[x,y])
-            except:
-                screen.blit(blockRenders[0][255 - c.lights[i][j]],[x,y])
-            y += 16
-        x += 16
-
+def drawBlocks(surface):
+    for i in xrange(WORLD_WIDTH):
+        for j in xrange(WORLD_HEIGHT):
+            surface.blit(blockRenders[c.world[i][j].id][255 - c.lights[i][j]],[i*16,j*16])
+            
+def drawBlock(surface, pos):
+    surface.blit(blockRenders[c.world[pos[0]][pos[1]].id][255 - c.lights[pos[0]][pos[1]]],[pos[0]*16,pos[1]*16])
+    
+def drawLighting(surface, pos):
+    for i in xrange(max(pos[0]-10, 0),min(pos[0]+11, WORLD_WIDTH)):
+        for j in xrange(max(pos[1]-10, 0),min(pos[1]+11, WORLD_HEIGHT)):
+            drawBlock(surface, (i,j))
  
 def drawInventory():
     initial_x = 5 #(WINDOW_WIDTH - 328) / 2
     initial_y = 5 #WINDOW_HEIGHT - 40
-    for i in range(len(inv)/inv_row):
+    for i in xrange(len(inv)/inv_row):
         row = i * 36
         screen.blit(inventoryBar, (initial_x, initial_y+row))
     back = pygame.Surface((32,32)).convert()
     back.set_alpha(128)
     back.fill((128,128,128)) 
-    for i in range(len(inv)):
+    for i in xrange(len(inv)):
         row = i/9 * 36
         mo = i%9
         if inv[i] is not None:
@@ -297,7 +299,7 @@ def drawInventory():
             screen.blit(text_surf, (initial_x + 32*mo + 4*(mo+1) + (32 - inv_font.size(text)[0]), initial_y+4+row))
         else:
             screen.blit(back, (initial_x + 32*mo + 4*(mo+1), initial_y+4+row))
-    for i in range(4):
+    for i in xrange(4):
         row = selected/9 * 36
         mo = selected%9
         pygame.draw.rect(screen, (128, 128, 128), (initial_x + 36 * mo + i, initial_y + i + row, 40 - 2*i, 40 - 2*i), 1)
@@ -317,7 +319,7 @@ def drawChest(metadata,x,y):
     back = pygame.Surface((16,16)).convert()
     back.set_alpha(128)
     back.fill((128,128,128))
-    for i in range(len(metadata)):
+    for i in xrange(len(metadata)):
         if metadata[i] is not None:
             screen.blit(ids[metadata[i]["id"]].image, (x+8-(chestBar.get_width()/2)-camera.x + 16*i + 2*(i+1), y-18-camera.y))
             text = str(metadata[i]["quantity"])
@@ -331,24 +333,18 @@ def drawProjectiles(projectiles):
         pygame.draw.rect(screen, i[3], (i[0][0] - camera.x, i[0][1] - camera.y, i[1], i[2]))
 
 
-def updateGrass(world, camera=None):
-    if camera:
-        x = -(camera.x % 16)
-        for i in range(int(math.floor(camera.x/16.0)), int(math.ceil((camera.x + camera.width)/16.0))):
-            y = -(camera.y % 16)
-            for j in range(int(math.floor(camera.y/16.0)), int(math.ceil((camera.y + camera.height)/16.0))):
-                try:
-                    if world[i][j].id == 4 and world[i][j-1].id == 0:
-                        world[i][j] = Data(3)
-                    if world[i][j].id == 3 and world[i][j-1].id != 0:
-                        world[i][j] = Data(4)
-                except:
-                    pass
-                y += 16
-            x += 16
+def updateGrass(world, pos=None):
+    if pos:
+        for i in xrange(2):
+            if world[pos[0]][pos[1]+i].id == 4 and world[pos[0]][pos[1]-1+i].id == 0:
+                world[pos[0]][pos[1]+i] = Data(3)
+                drawBlock(world_surface, (pos[0],pos[1]+i))
+            if world[pos[0]][pos[1]+i].id == 3 and world[pos[0]][pos[1]-1+i].id != 0:
+                world[pos[0]][pos[1]+i] = Data(4)
+                drawBlock(world_surface, (pos[0],pos[1]+i))
     else:
-        for x in range(WORLD_WIDTH):
-            for y in range(WORLD_HEIGHT):
+        for x in xrange(WORLD_WIDTH):
+            for y in xrange(WORLD_HEIGHT):
                 if world[x][y].id == 4 and world[x][y-1].id == 0:
                     world[x][y] = Data(3)
                 
@@ -430,7 +426,7 @@ if __name__ == "__main__":
     
     camera = pygame.Rect(0,0,WINDOW_WIDTH,WINDOW_HEIGHT)
     
-    ids = [None for i in range(256)]
+    ids = [None for i in xrange(256)]
     
     from id_list import *
     
@@ -508,22 +504,26 @@ if __name__ == "__main__":
         lightBacks[i].set_alpha(i)
         
     blockRenders = []
-    for i in range(len(ids)):
+    for i in xrange(len(ids)):
         blockRenders.append([])
         try:
             for j in xrange(256):
                 block_copy = ids[i].image.copy()
                 block_copy.blit(lightBacks[j], (0,0))
+                block_copy = block_copy.convert()
                 blockRenders[i].append(block_copy)
         except:
+            #An exception is raised if there is no image for a certain id
             pass
+        
+    world_surface = pygame.Surface((WORLD_WIDTH_PX,WORLD_HEIGHT_PX)).convert()
+    drawBlocks(world_surface)
     
     #main game loop
     while True:
         clock.tick(60)
         c.Loop()
         c.Send({"action": "posChange", "x": character.rect.x, "y": character.rect.y}) #sends character position to server
-        
         #gets input
         key = pygame.key.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
@@ -624,9 +624,9 @@ if __name__ == "__main__":
                         
         setCam(camera, character)
         gravity(character)
-        drawBlocks(camera)
+        screen.blit(world_surface, (0,0), camera)
         pygame.draw.rect(screen, (0,0,0), ((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 16, 16), 1)
-        for i in range(len(c.players)):
+        for i in xrange(len(c.players)):
             if c.players[i][2] != c.uuid: #only use server data to draw other players; our player is drawn client side
                 screen.blit(character.image, (c.players[i][0]-camera.x,c.players[i][1]-camera.y))
                 drawName(c.players[i][3],c.players[i][0],c.players[i][1])
