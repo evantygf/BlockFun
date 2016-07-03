@@ -522,10 +522,8 @@ if __name__ == "__main__":
     #main game loop
     while True:
         clock.tick(60)
-        ct = time.time()
         c.Loop()
         c.Send({"action": "posChange", "x": character.rect.x, "y": character.rect.y}) #sends character position to server
-        
         #gets input
         key = pygame.key.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
@@ -642,5 +640,4 @@ if __name__ == "__main__":
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
         drawInventory()
         pygame.display.update()
-        print time.time() - ct
 #         frame += 1
