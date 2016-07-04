@@ -40,7 +40,6 @@ class Client(ConnectionListener):
         pass
     
     def Network_world(self, data):
-#         self.world = pickle.loads(data["world"])
         world = data["world"]
         
         global WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH_PX, WORLD_HEIGHT_PX
@@ -54,8 +53,7 @@ class Client(ConnectionListener):
 
     def Network_blockChange(self, data):
         self.world[data["x"]][data["y"]] = Data(data["id"],metadata=data["metadata"])
-#         threading.Thread(target=self.lightThread).start()
-        self.lights = calculateLight() #no longer need threads because of speed improvements
+        self.lights = calculateLight()
         updateGrass(self.world, (data["x"],data["y"]))
         drawBlock(world_surface, (data["x"],data["y"]))
         drawLighting(world_surface, (data["x"],data["y"]))
@@ -105,43 +103,6 @@ class Tile(Id):
         self.breakable = breakable
         self.drops = drops
         self.illuminant = illuminant
-        
-# class Container:
-#     def __init__(self):
-#         self.inv = [None for i in range(9)]
-#         
-#     def getInvSlot(id):
-#         indexer = dict((p['id'], i) for i, p in enumerate(self.inv) if self.inv[i] is not None)
-#         return indexer.get(id)
-#     
-#     def getItemAmount(id):
-#         index = getInvSlot(id)
-#         if index is not None:
-#             return self.inv[index]["quantity"]
-#         else:
-#             return None
-#         
-#     def getSlotAmount(slot):
-#         if self.inv[slot] is not None:
-#             return self.inv[slot]["quantity"]
-#         else:
-#             return 0
-#         
-#     def addToInv(id, amount):
-#         indexer = dict((p['id'], i) for i, p in enumerate(self.inv) if self.inv[i] is not None)
-#         if indexer.get(id) is not None:
-#             if self.inv[indexer.get(id)]["quantity"] + amount <= 0:
-#                 self.inv[indexer.get(id)] = None
-#             else:
-#                 self.inv[indexer.get(id)]["quantity"] += amount
-#         else:
-#             for i in range(len(self.inv)):
-#                 if self.inv[i] is None:
-#                     self.inv[i] = {"id": id, "quantity": amount}
-#                     break
-
-
-#Data is an id that has metadata (such as what items are in a chest)
         
 class Character:
     def __init__(self, image_path, name):
@@ -397,7 +358,7 @@ def gravity(char):
 def resetPosition():
     character.rect.topleft = ((WORLD_WIDTH_PX-16)/2, 0) #initial position is in the sky in the middle of the map
     character.rect.x = character.rect.x/16*16
-    while not (getId(c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id).state == 1 or getId(c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id).state == 1):
+    while not (ids[c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id].state == 1 or ids[c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id].state == 1):
         character.rect.y += 1 #lower player until they hit ground
 
 #constants
@@ -409,6 +370,7 @@ WORLD_WIDTH = 128 #changes based on server world data
 WORLD_HEIGHT = 128 #changes based on server world data
 WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X #changes based on server world data
 WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y #changes based on server world data
+BLOCK_BREAK_DISTANCE = 12
 
 
 if __name__ == "__main__":
@@ -536,6 +498,8 @@ if __name__ == "__main__":
         hovered_data = c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16]
         hovered = ids[hovered_data.id]
         
+        hovered_distance = math.sqrt(math.fabs((mouse_pos[0] + camera.x)/16 - character.rect.centerx/16) ** 2 + math.fabs((mouse_pos[1]+ camera.y)/16 - character.rect.centery/16) ** 2)
+        
         if key[K_a]:    
             if ids[c.world[(character.rect.left - 1)/16][character.rect.top / 16].id].state == 0 and ids[c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id].state == 0:
                 character.rect.x -= 1
@@ -558,21 +522,19 @@ if __name__ == "__main__":
                     c.Send({"action": "addProjectile", "width": 5, "height": 5, "startpos": character.rect.center, "speed": 10, "traveldistance": 400, "angle": rotation_angle, "color": (0,0,0)})
                     c.time_shot = time.time()
             elif hovered.breakable:
-                #addToInv(hovered.drops, 1)
-                c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
-                #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(0)
+                if hovered_distance <= BLOCK_BREAK_DISTANCE:
+                    c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
         #right click
         if mouse_press[2]:
-            if hovered.id == 0:
-                if getSlotAmount(selected) != 0:
-                    if ids[inv[selected]["id"]].type == "block":
-                        if getSlotAmount(selected) > 0:
-                            char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
-                            block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
-                            if not char_rect.colliderect(block_rect):
-                                c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": inv[selected]["id"], "metadata": None, "inv": inv[selected]["id"], "amount": -1})
-                                #c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16] = Data(inv[selected]["id"])
-                                #addToInv(inv[selected]["id"], -1)
+            if hovered_distance <= BLOCK_BREAK_DISTANCE:
+                if hovered.id == 0:
+                    if getSlotAmount(selected) != 0:
+                        if ids[inv[selected]["id"]].type == "block":
+                            if getSlotAmount(selected) > 0:
+                                char_rect = pygame.Rect((character.rect.x - camera.x, character.rect.y - camera.y), (16, 32))
+                                block_rect = pygame.Rect((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 15, 15)
+                                if not char_rect.colliderect(block_rect):
+                                    c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": inv[selected]["id"], "metadata": None, "inv": inv[selected]["id"], "amount": -1})
         for event in pygame.event.get():
             if event.type == QUIT:
                 sys.exit()
@@ -630,7 +592,8 @@ if __name__ == "__main__":
         setCam(camera, character)
         gravity(character)
         screen.blit(world_surface, (0,0), camera)
-        pygame.draw.rect(screen, (0,0,0), ((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 16, 16), 1)
+        if hovered_distance <= BLOCK_BREAK_DISTANCE:
+            pygame.draw.rect(screen, (0,0,0), ((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 16, 16), 1) #black rectangle around selected block
         for i in xrange(len(c.players)):
             if c.players[i][2] != c.uuid: #only use server data to draw other players; our player is drawn client side
                 screen.blit(character.image, (c.players[i][0]-camera.x,c.players[i][1]-camera.y))
