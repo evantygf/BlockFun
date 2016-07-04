@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+#Data is an id that has metadata (such as what items are in a chest)
 class Data:
     def __init__(self, id, metadata=None):
         self.id = id
