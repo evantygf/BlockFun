@@ -152,13 +152,6 @@ class Character:
         self.yVel = 0
         self.progress = 0 #To be used when blocks take time to break
 
-class Projectile:
-    def __init__(self, width, height, pos, color):
-        self.width = width
-        self.height = height
-        self.color = color
-        self.pos = pos
-
 
 def getId(id):
     return ids[id]
