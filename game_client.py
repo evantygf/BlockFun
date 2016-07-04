@@ -30,6 +30,8 @@ class Client(ConnectionListener):
         self.projectiles = []
         self.lights = None
         self.time_shot = time.time()
+        self.time_breaking = time.time()
+        self.last_hovered_pos = (0,0)
     
     def Loop(self):
         self.Pump()
@@ -360,6 +362,19 @@ def resetPosition():
     character.rect.x = character.rect.x/16*16
     while not (ids[c.world[(character.rect.left + 1) / 16][character.rect.bottom / 16].id].state == 1 or ids[c.world[(character.rect.right - 1) / 16][character.rect.bottom / 16].id].state == 1):
         character.rect.y += 1 #lower player until they hit ground
+        
+def loadAnimation(path, width, height):
+    image = pygame.image.load(path).convert_alpha()
+    rect = image.get_rect()
+    columns = rect.width/width
+    rows = rect.height/height
+    animation = []
+    for i in xrange(rows):
+        for j in xrange(columns):
+            subrect = pygame.Rect(j*width, i*height, width, height)
+            animation.append(image.subsurface(subrect))
+    return animation
+    
 
 #constants
 WINDOW_WIDTH = 640 #default value; can be changed in config
@@ -371,6 +386,7 @@ WORLD_HEIGHT = 128 #changes based on server world data
 WORLD_WIDTH_PX = WORLD_WIDTH*TILE_SIZE_X #changes based on server world data
 WORLD_HEIGHT_PX = WORLD_HEIGHT*TILE_SIZE_Y #changes based on server world data
 BLOCK_BREAK_DISTANCE = 12
+BLOCK_BREAK_TIME = 0.5
 
 
 if __name__ == "__main__":
@@ -419,9 +435,7 @@ if __name__ == "__main__":
     
     character = Character("images/character.png", "User")
     
-    # real_tiles = [ids[i] for i in range(len(ids)) if ids[i] is not None]
-    # breakables = [real_tiles[i] for i in range(len(real_tiles)) if real_tiles[i].breakable]
-    # breakables.remove(3) #cant get grass because grass drops dirt
+    blockshatter_anim = loadAnimation("images/blockshatter.png", 16, 16)
     
     inv_row = 9
     inv = [None for i in range(inv_row*2)]
@@ -486,19 +500,25 @@ if __name__ == "__main__":
     world_surface = pygame.Surface((WORLD_WIDTH_PX,WORLD_HEIGHT_PX)).convert()
     drawBlocks(world_surface)
     
+    new_hovered = False
     #main game loop
     while True:
         clock.tick(60)
+        
+        break_phase = None
+        
         c.Loop()
         c.Send({"action": "posChange", "x": character.rect.x, "y": character.rect.y}) #sends character position to server
         #gets input
         key = pygame.key.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed()
-        hovered_data = c.world[(mouse_pos[0] + camera.x)/16][(mouse_pos[1]+ camera.y)/16]
+        hovered_pos = ((mouse_pos[0] + camera.x)/16,(mouse_pos[1]+ camera.y)/16)
+        hovered_data = c.world[hovered_pos[0]][hovered_pos[1]]
         hovered = ids[hovered_data.id]
-        
-        hovered_distance = math.sqrt(math.fabs((mouse_pos[0] + camera.x)/16 - character.rect.centerx/16) ** 2 + math.fabs((mouse_pos[1]+ camera.y)/16 - character.rect.centery/16) ** 2)
+        hovered_distance = math.sqrt(math.fabs(hovered_pos[0] - character.rect.centerx/16) ** 2 + math.fabs(hovered_pos[1] - character.rect.centery/16) ** 2)
+        if hovered_pos != c.last_hovered_pos:
+            c.time_breaking = time.time()
         
         if key[K_a]:    
             if ids[c.world[(character.rect.left - 1)/16][character.rect.top / 16].id].state == 0 and ids[c.world[(character.rect.left - 1) / 16][(character.rect.bottom - 1) / 16].id].state == 0:
@@ -523,7 +543,15 @@ if __name__ == "__main__":
                     c.time_shot = time.time()
             elif hovered.breakable:
                 if hovered_distance <= BLOCK_BREAK_DISTANCE:
-                    c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
+                    tb = int((time.time() - c.time_breaking)/BLOCK_BREAK_TIME*10)
+                    if 0<=tb<=9:
+                        break_phase = tb
+                    else:
+                        break_phase = 9
+                    if time.time() - c.time_breaking >= BLOCK_BREAK_TIME:
+                        c.Send({"action": "blockChange", "x": (mouse_pos[0] + camera.x)/16, "y": (mouse_pos[1]+ camera.y)/16, "id": 0, "metadata": None, "inv": hovered.drops, "amount": 1})
+        else:
+            c.time_breaking = time.time()
         #right click
         if mouse_press[2]:
             if hovered_distance <= BLOCK_BREAK_DISTANCE:
@@ -593,7 +621,9 @@ if __name__ == "__main__":
         gravity(character)
         screen.blit(world_surface, (0,0), camera)
         if hovered_distance <= BLOCK_BREAK_DISTANCE:
-            pygame.draw.rect(screen, (0,0,0), ((mouse_pos[0] + camera.x ) / 16 * 16 - camera.x, (mouse_pos[1] + camera.y) / 16 * 16 - camera.y, 16, 16), 1) #black rectangle around selected block
+            pygame.draw.rect(screen, (0,0,0), (hovered_pos[0] * 16 - camera.x, hovered_pos[1] * 16 - camera.y, 16, 16), 1) #black rectangle around selected block
+        if break_phase != None:
+            screen.blit(blockshatter_anim[break_phase], (hovered_pos[0] * 16 - camera.x, hovered_pos[1] * 16 - camera.y))
         for i in xrange(len(c.players)):
             if c.players[i][2] != c.uuid: #only use server data to draw other players; our player is drawn client side
                 screen.blit(character.image, (c.players[i][0]-camera.x,c.players[i][1]-camera.y))
@@ -608,4 +638,5 @@ if __name__ == "__main__":
                 drawChest(hovered_data.metadata,(mouse_pos[0] + camera.x)/16*16,(mouse_pos[1]+ camera.y)/16*16)
         drawInventory()
         pygame.display.update()
+        c.last_hovered_pos = hovered_pos
 #         frame += 1
